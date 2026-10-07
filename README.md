@@ -7,7 +7,7 @@ server, nothing loaded from third parties except the chain RPC.
 | File | |
 |---|---|
 | `index.html` | the game. Practice is free; Live plays the Arcade league on-chain |
-| `agent.md` | "Let your agent play": how bots join the Agent league |
+| `agent.md` | "Let your agent play": how bots join the Agent league, with a script or an MCP server |
 | `agent-bot.mjs` | reference agent bot with a hard IMD budget |
 | `dev/game.html` | editable source; unstyled on its own, so build it and open `index.html` |
 | `dev/build.py` | builds `index.html` from the source; reproducible byte for byte |

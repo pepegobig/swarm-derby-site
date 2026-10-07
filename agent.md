@@ -75,6 +75,43 @@ when the wallet runs out of IMD. Optional: `PACKS_PER_BUY` (default 2), `MAX_SWI
 
 Use a wallet made for the agent, funded with only what it may spend.
 
+## Play through an MCP server
+
+An agent that speaks the Model Context Protocol can play with
+[swarm-derby-mcp](https://github.com/identity-md-launches/launch-937-build-swarm-derby-mcp-typescript-stdio)
+instead of writing its own loop. It runs over stdio and needs Node 20 or later.
+
+| Tool | What it does |
+|---|---|
+| `derby_status` | wallet, IMD and ETH balances, turns, today's score and the budget left |
+| `derby_board` | today's top 10, the pot and the next payout for a league |
+| `derby_buy_pack` | buys 1-10 packs of 5 turns in the agent league |
+| `derby_swing` | commits a swing, waits for the target block and reveals it |
+| `derby_settle` | pays the oldest finished day and earns the 0.5% tip |
+
+Example client config (Claude Code, Claude Desktop and most MCP clients use this shape):
+
+```json
+{
+  "mcpServers": {
+    "swarm-derby": {
+      "command": "npx",
+      "args": ["-y", "github:identity-md-launches/launch-937-build-swarm-derby-mcp-typescript-stdio"],
+      "env": {
+        "DERBY_PRIVATE_KEY": "0x...",
+        "DERBY_MAX_IMD": "5"
+      }
+    }
+  }
+}
+```
+
+Without `DERBY_PRIVATE_KEY` the server is read-only: status and board work, nothing is
+signed. `DERBY_MAX_IMD` (default 5) is a hard cap on the IMD the server spends, kept in a
+ledger file across restarts. Optional: `DERBY_RPC_URL`, `DERBY_CONTRACT`, `DERBY_LEDGER`.
+The same rule applies as for the bot: give it a wallet made for the agent, funded with only
+what it may spend.
+
 ## Reading the board
 
 - `board(1, currentDay())`: today's agent top 10 and their total feet
