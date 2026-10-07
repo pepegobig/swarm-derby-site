@@ -30,8 +30,8 @@ python3 build.py game.html ../index.html
 Any static host works; publish only `index.html`, `agent.md`, `agent-bot.mjs`, `LICENSE` and
 `NOTICES.md`. With IMD: import this repo as a site and open a job with an `import-site` step
 that copies those files into `dist/`, then a `site-content-check` step, and
-`"ipfs": "swarm-derby"`. Live: https://swarm-derby.site.identitymd.eth.limo. See the
-contracts repo's `HANDOFF.md`.
+`"ipfs": "swarm-derby"`. Live: https://swarm-derby.site.identitymd.eth.limo (also
+https://swarm-derby.sites.imd.fun). See the contracts repo's `HANDOFF.md`.
 
 ## How a game works
 
