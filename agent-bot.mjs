@@ -46,9 +46,11 @@ const ABI = [
   'function buyPacks(uint8 league, uint256 packs)',
   'function swing(uint8 league, uint8 quality, uint8 velo, bytes32 commit) returns (uint256)',
   'function finalize(uint256 swingId, bytes32 salt) returns (uint8, uint16)',
+  'function expire(uint256 swingId)',
+  'function swings(uint256) view returns (address player, uint8 league, uint8 quality, uint8 velo, uint8 status, uint64 committedAt, bytes32 commit, uint32 day, bytes32 drawHash)',
   'function currentDay() view returns (uint256)',
   'function dayScore(uint8 league, uint256 day, address player) view returns (uint256)',
-  'event SwingCommitted(uint256 indexed swingId, address indexed player, uint8 league, uint8 quality, uint8 velo, uint64 targetBlock)',
+  'event SwingCommitted(uint256 indexed swingId, address indexed player, uint8 league, uint8 quality, uint8 velo, uint64 committedAt)',
   'event SwingResolved(uint256 indexed swingId, address indexed player, uint8 tier, uint16 feet)'
 ];
 const ERC20 = [
@@ -76,7 +78,8 @@ const derby = new ethers.Contract(DERBY, ABI, wallet);
 // Every transaction pays at most MAX_GWEI per gas, whatever fee the RPC suggests.
 const fee = { maxFeePerGas: MAX_FEE, maxPriorityFeePerGas: 0n };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const blockNumber = async () => Number(await provider.send('eth_blockNumber', []));
+const COMMITTED = 1n, DRAWN = 2n; // Status: None, Committed, Drawn, Final, Refunded
+const DRAW_WAIT_MS = 5 * 60_000 + 15_000; // DRAW_WINDOW and a margin for the chain clock
 
 async function send(txPromise) {
   const tx = await txPromise;
@@ -103,6 +106,7 @@ async function main() {
   let spent = 0n;
   let swings = 0;
   let totalFeet = 0;
+  let undrawn = 0;
   console.log(`agent ${me} · quality ${QUALITY} · budget ${ethers.formatEther(MAX_IMD)} IMD`);
 
   while (swings < MAX_SWINGS) {
@@ -122,10 +126,20 @@ async function main() {
     const commit = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32', 'address'], [salt, me]));
     const committed = event(await send(derby.swing(AGENT, QUALITY, VELO, commit, fee)), 'SwingCommitted');
     const swingId = committed.args.swingId;
-    const target = Number(committed.args.targetBlock);
 
-    // 3. Reveal once the target block exists (5 blocks, ~0.5s). Must land within 255 blocks.
-    while ((await blockNumber()) <= target) await sleep(120);
+    // 3. Wait for the house draw (normally a few seconds), then reveal. With no draw in
+    //    5 minutes, expire gives the turn back.
+    const deadline = Date.now() + DRAW_WAIT_MS;
+    let status;
+    while ((status = (await derby.swings(swingId)).status) === COMMITTED && Date.now() < deadline) await sleep(250);
+    if (status === COMMITTED) {
+      await send(derby.expire(swingId, fee));
+      console.log(`#${swingId} no draw in 5 minutes: turn given back`);
+      if (++undrawn >= 3) { console.log('the house is not drawing, stopping'); break; }
+      continue;
+    }
+    if (status !== DRAWN) continue;
+    undrawn = 0;
     const resolved = event(await send(derby.finalize(swingId, salt, fee)), 'SwingResolved');
     const tier = Number(resolved.args.tier);
     const feet = Number(resolved.args.feet);

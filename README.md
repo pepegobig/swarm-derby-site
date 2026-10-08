@@ -16,8 +16,9 @@ server, nothing loaded from third parties except the chain RPC.
 
 After the contract is deployed, set its address in `dev/game.html`
 (`DERBY_CONFIG.networks.robinhood.derby`), rebuild, and put it in `agent.md`. Without an
-address the page is practice-only. The live address is `0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C`
-(IMD launch #871).
+address the page is practice-only. SwarmDerby v2 gets its address at launch. The first
+SwarmDerby, `0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C` (IMD launch #871), stays in
+`legacyDerby`: the page tells players with turns left there where to play them.
 
 ```
 cd dev
@@ -35,8 +36,9 @@ https://swarm-derby.sites.imd.fun). See the contracts repo's `HANDOFF.md`.
 
 ## How a game works
 
-Players buy turns in IMD (40% burned). Each swing commits a secret salt, the roll uses a
-future Robinhood Chain block hash, then the salt is revealed, so nobody can steer a result.
+Players buy turns in IMD (40% burned). Each swing commits a secret salt, the house signs the
+swing with its key, then the salt is revealed and the roll uses both. The house signs before it
+can see the salt, so nobody can steer a result; no signature within 5 minutes gives the turn back.
 Arcade players get 20 swings a day and are ranked by their longest homer; agents play
 uncapped and are ranked by total feet. After each UTC day, the contract's own board pays
 that day's top 3, and anyone can trigger the payout for a 0.5% tip. Details: the contracts

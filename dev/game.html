@@ -1831,10 +1831,11 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     }, 0);
 
     // ───────── Live mode: Robinhood Chain ─────────
-    // Practice stays free and local. Live mode sends every at-bat to SwarmDerby:
-    //   swing(quality, velo, commit) → wait for the target block → finalize(swingId, salt)
-    // The salt never leaves this browser until the reveal, so nobody (including us) can
-    // predict or steer a roll. See contracts/DEPLOY.md.
+    // Practice stays free and local. Live mode sends every at-bat to SwarmDerby v2:
+    //   swing(quality, velo, commit) → the house draws (signs the swing) → finalize(swingId, salt)
+    // The house signs before it can see the salt, and the salt never leaves this browser until
+    // the reveal, so neither side can predict or steer a roll. No draw within 5 minutes gives
+    // the turn back (expire). See specs/WP7-house-draw.md in the contracts repo.
 
     const DERBY_CONFIG = (() => {
       const networks = {
@@ -1843,8 +1844,11 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
           rpc: 'https://rpc.mainnet.chain.robinhood.com',
           explorer: 'https://robinhoodchain.blockscout.com',
           imd: '0x5F7Bb59365ce557C26dbcAa4EE9d39A4b95B7127',
-          derby: '0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C', // SwarmDerby, IMD launch #871
-          auction: '0x0d81989ea1a4fdafb309ce738271d3bd659dab7b' // DerbyAuction, IMD launch #1053
+          derby: '', // SwarmDerby v2: set at launch
+          auction: '0x0d81989ea1a4fdafb309ce738271d3bd659dab7b', // DerbyAuction, IMD launch #1053
+          // The first SwarmDerby (IMD launch #871) and the page that still plays it, for leftover turns.
+          legacyDerby: '0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C',
+          legacySite: 'https://swarm-derby-b865.sites.imd.fun'
         },
         'robinhood-testnet': {
           name: 'Robinhood Chain Testnet', chainId: 46630,
@@ -1855,7 +1859,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       const qs = new URLSearchParams(location.search);
       // The local devnet only on a local page: a shared link must never add a network with
       // someone else's RPC to a player's wallet.
-      const localPage = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+      const localPage = location.protocol === 'file:' || ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
       const key = networks[qs.get('network')] && (qs.get('network') !== 'local' || localPage) ? qs.get('network') : 'robinhood';
       const net = { ...networks[key], key };
       // Address overrides only for the local devnet: a shared link must never be able to
@@ -1871,13 +1875,14 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       'function arcadeSwingsLeft(address player) view returns (uint256)',
       'function sessionOf(address) view returns (address)',
       'function sessionNonce(address) view returns (uint256)',
-      'function swings(uint256) view returns (address player, uint8 league, uint8 quality, uint8 velo, uint8 status, uint64 targetBlock, bytes32 commit, uint32 day)',
+      'function swings(uint256) view returns (address player, uint8 league, uint8 quality, uint8 velo, uint8 status, uint64 committedAt, bytes32 commit, uint32 day, bytes32 drawHash)',
       'function buyTurns(uint8 league, uint256 count)',
       'function buyPacks(uint8 league, uint256 packs)',
       'function setSession(address session, bytes consent)',
       'function swing(uint8 league, uint8 quality, uint8 velo, bytes32 commit) returns (uint256)',
       'function finalize(uint256 swingId, bytes32 salt) returns (uint8, uint16)',
-      'event SwingCommitted(uint256 indexed swingId, address indexed player, uint8 league, uint8 quality, uint8 velo, uint64 targetBlock)',
+      'function expire(uint256 swingId)',
+      'event SwingCommitted(uint256 indexed swingId, address indexed player, uint8 league, uint8 quality, uint8 velo, uint64 committedAt)',
       'event SwingResolved(uint256 indexed swingId, address indexed player, uint8 tier, uint16 feet)'
     ];
     const ARCADE = 0; // this page plays the arcade league; agents use the contract directly
@@ -1895,7 +1900,10 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       'function allowance(address, address) view returns (uint256)',
       'function approve(address, uint256) returns (bool)'
     ];
-    const FINALIZE_WINDOW = 255;
+    // Constants of SwarmDerby v2 (seconds from the commit): the house draws inside DRAW_WINDOW,
+    // the player reveals inside the next REVEAL_WINDOW.
+    const DRAW_WINDOW = 300, REVEAL_WINDOW = 300;
+    const Status = { COMMITTED: 1, DRAWN: 2 };
 
     const live = {
       on: false, busy: false, account: null,
@@ -2060,7 +2068,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         btn.style.display = 'none';
       } else {
         note.textContent = st.state === 'error' ? "Couldn't reach Robinhood Chain."
-          : st.state === 'waiting' && st.day < BigInt(Math.floor(Date.now() / 86400000)) ? 'Last reveals are closing. Payout opens in under a minute.'
+          : st.state === 'waiting' && st.day < BigInt(Math.floor(Date.now() / 86400000)) ? 'Last reveals are closing. Payout opens within 10 minutes.'
           : 'Payouts open after 00:00 UTC.';
         btn.style.display = 'none';
       }
@@ -2134,11 +2142,22 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         }
         renderLiveUI();
         postCommentary(`Wallet ${shortAddr(live.account)} connected on ${DERBY_CONFIG.name}.`);
+        checkLegacyTurns();
         if (liveReady()) await setLiveMode(true);
         else showBanner('PRACTICE ONLY', 'Live play opens once the contract is deployed', 'green');
       } catch (e) {
         txError(e);
       }
+    }
+
+    /** Arcade turns left on the first SwarmDerby can still be played on the page that plays it. */
+    async function checkLegacyTurns() {
+      if (!DERBY_CONFIG.legacyDerby) return;
+      try {
+        const old = new ethers.Contract(DERBY_CONFIG.legacyDerby, DERBY_ABI, live.read);
+        const t = await old.turns(ARCADE, live.account);
+        if (t > 0n) postCommentary(`You have ${t} turns left on the first SwarmDerby. Play them at ${DERBY_CONFIG.legacySite}.`);
+      } catch (e) {}
     }
 
     async function setLiveMode(on) {
@@ -2302,18 +2321,46 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     const updatePending = (commit, patch) => savePendingList(loadPending().map((p) => (p.commit === commit ? { ...p, ...patch } : p)));
     const dropPending = (commit) => savePendingList(loadPending().filter((p) => p.commit !== commit));
 
-    async function blockNumber() {
-      return Number(await live.read.send('eth_blockNumber', []));
+    /** The last block mined before `ts` (unix seconds), found by stepping back. */
+    async function blockBefore(ts) {
+      const latest = await live.read.getBlock('latest');
+      for (let step = 256; ; step *= 2) {
+        const n = Math.max(0, latest.number - step);
+        if (n === 0 || (await live.read.getBlock(n)).timestamp < ts) return n;
+      }
     }
 
-    async function revealSwing(swingId, salt, target) {
-      while ((await blockNumber()) <= target) await sleep(120);
+    /** Wait for the house draw, then reveal. The house signs each swing about a second after
+     *  the commit. If it has not drawn when DRAW_WINDOW ends, expire gives the turn back:
+     *  returns { refunded: true }. */
+    async function revealSwing(swingId, salt, committedAt) {
+      // The window runs in chain time; this device's clock may be off, so count from the chain.
+      const chainNow = (await live.read.getBlock('latest')).timestamp;
+      const drawEnds = Date.now() + (committedAt + DRAW_WINDOW - chainNow) * 1000;
+      for (let tries = 0; ;) {
+        const status = Number((await live.derby.swings(swingId)).status);
+        if (status === Status.DRAWN) break;
+        if (status !== Status.COMMITTED) throw new Error(`swing #${swingId} is already closed`);
+        if (Date.now() > drawEnds) {
+          // Blocks can trail by a moment: expire only once a call shows it would pass.
+          try {
+            await actor().expire.staticCall(swingId);
+          } catch (e) {
+            if (++tries > 24) throw e;
+            await sleep(5000);
+            continue;
+          }
+          await waitTx(await actor().expire(swingId));
+          return { refunded: true };
+        }
+        await sleep(250);
+      }
       let rc;
       try {
         rc = await waitTx(await actor().finalize(swingId, salt));
       } catch (e) {
         // The session key ran dry between swing and reveal: reveal from the main wallet
-        // so the swing isn't lost to the expiry window.
+        // so the swing isn't lost to the reveal window.
         if (!(sessionUsable() || live.sessionActive) || e?.code === 'ACTION_REJECTED') throw e;
         postCommentary('Quick-swing key is out of gas. Confirm the reveal in your wallet.');
         rc = await waitTx(await live.derby.connect(live.signer).finalize(swingId, salt));
@@ -2331,8 +2378,8 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         if (rc) return rc.status === 1 ? findEvent(rc, 'SwingCommitted').args.swingId : -1n;
       }
       // No hash (the page closed before the wallet returned one) or the node forgot it:
-      // look for this commit among the player's swings inside the reveal window.
-      const from = Math.max(0, (await blockNumber()) - FINALIZE_WINDOW - 20);
+      // look for this commit among the player's swings since the page made it.
+      const from = await blockBefore(Math.floor(p.at / 1000) - 60);
       for (const log of await live.derby.queryFilter(live.derby.filters.SwingCommitted(null, live.account), from)) {
         if ((await live.derby.swings(log.args.swingId)).commit === p.commit) return log.args.swingId;
       }
@@ -2347,7 +2394,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
           try { id = await findCommittedSwing(p); } catch (e) {}
           if (id === -1n) { dropPending(p.commit); continue; } // reverted: no turn was spent
           if (id == null) {
-            if (Date.now() - p.at > 10 * 60 * 1000) dropPending(p.commit);
+            if (Date.now() - p.at > (DRAW_WINDOW + REVEAL_WINDOW) * 1000) dropPending(p.commit);
             continue;
           }
           p.swingId = id.toString();
@@ -2355,10 +2402,15 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         }
         try {
           const sw = await live.derby.swings(p.swingId);
-          if (Number(sw.status) !== 1) { dropPending(p.commit); continue; }
-          if ((await blockNumber()) - Number(sw.targetBlock) > FINALIZE_WINDOW) { dropPending(p.commit); continue; }
-          const r = await revealSwing(BigInt(p.swingId), p.salt, Number(sw.targetBlock));
+          const status = Number(sw.status), committedAt = Number(sw.committedAt);
+          if (status !== Status.COMMITTED && status !== Status.DRAWN) { dropPending(p.commit); continue; }
+          // Drawn but past the reveal window: it counts as a foul either way, so spend no gas.
+          const chainNow = (await live.read.getBlock('latest')).timestamp;
+          if (status === Status.DRAWN && chainNow > committedAt + DRAW_WINDOW + REVEAL_WINDOW) { dropPending(p.commit); continue; }
+          postCommentary(`Finishing swing #${p.swingId} from before the reload…`);
+          const r = await revealSwing(BigInt(p.swingId), p.salt, committedAt);
           dropPending(p.commit);
+          if (r.refunded) { postCommentary(`Swing #${p.swingId} was never drawn. Your turn is back.`); continue; }
           postCommentary(`Revealed unfinished swing #${p.swingId}: ${DerbyOdds.TIERS[r.tier]} ${r.feet ? r.feet + ' FT' : ''}`);
           if (r.tier >= 3) recordHomerFeet(r.feet);
         } catch (e) {}
@@ -2384,10 +2436,10 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       }
       const ev = findEvent(rc, 'SwingCommitted');
       const swingId = ev.args.swingId;
-      const target = Number(ev.args.targetBlock);
-      updatePending(commit, { swingId: swingId.toString(), target });
-      const r = await revealSwing(swingId, salt, target);
+      updatePending(commit, { swingId: swingId.toString() });
+      const r = await revealSwing(swingId, salt, Number(ev.args.committedAt));
       dropPending(commit);
+      if (r.refunded) return r;
       return { ...r, name: DerbyOdds.TIERS[r.tier], id: swingId.toString(), salt };
     }
 
@@ -2401,10 +2453,18 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       live.busy = true;
       gameState = STATES.CHAIN;
       showBanner('CONTACT!', 'Robinhood Chain is rolling it…', 'green');
-      postCommentary(sessionUsable() ? 'Swing committed. Revealing in ~1s…' : 'Confirm the swing, then the reveal, in your wallet.');
+      postCommentary(sessionUsable() ? 'Swing committed. Waiting for the house draw…' : 'Confirm the swing, then the reveal, in your wallet.');
       try {
         const r = await liveSwing(q, v);
         await refreshLive();
+        if (r.refunded) {
+          showBanner('TURN RETURNED', 'The house did not draw within 5 minutes', 'red');
+          postCommentary('No house draw in 5 minutes. The turn is back in your card; nothing was lost.');
+          gameState = STATES.RESULT;
+          batterState = 'idle';
+          buttonLabel.textContent = turnsLeft > 0 ? 'STEP UP TO PLATE' : BUY_PACK_LABEL;
+          return;
+        }
         playRoll({ ...r, q, v }, timingOffset);
       } catch (e) {
         txError(e);
@@ -3088,7 +3148,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         return;
       }
 
-      // Practice: local random seed. Live: keccak(player salt, future block hash), on-chain.
+      // Practice: local random seed. Live: keccak(player salt, house draw), on-chain.
       const seed = randomSeed();
       const id = swingCounter++;
       const r = DerbyOdds.roll(seed, id, q, v);
