@@ -26,7 +26,6 @@
   },
   "stadium": {
     "name": "Swarm Derby",
-    "backdrop": "stadium.png",
     "palette": {
       "grass": "#166534",
       "grassStripe": "#15803d",

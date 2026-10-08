@@ -122,9 +122,9 @@ Each image ≤ 300 KB; pack folder ≤ 1.2 MB; only files named in `theme.json`.
 
 - `node dev/validate-theme.mjs themes/<id>` checks §2–3 (pixel sizes read from file headers),
   prints each failure, exits non-zero. `--all` checks `index.json` and every referenced pack.
-- `dev/render-gus.mjs` renders today's `drawSlugger` poses, pitcher and racks to the sizes in
-  §3 and writes `themes/gus/theme.json` with today's colours, `weather: "clear"`, and the
-  cleaned commentary.
+- `dev/render-gus.mjs` renders today's `drawSlugger` poses and pitcher to the sizes in §3 and
+  writes `themes/gus/theme.json` with today's colours, `weather: "clear"`, and the cleaned
+  commentary. The `gus` pack has no backdrop, so the built-in racks keep their animation.
 
 ## Done when
 
