@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "id": "2026-10-09",
+  "title": "Pumpkin",
+  "shoutout": "@imdradar",
+  "winner": "0xd4d1aeef7b978ab7dbc947205bafffde01b41018",
+  "auctionDay": 20735,
+  "batter": {
+    "name": "PUMPKIN",
+    "number": "7",
+    "sprites": {
+      "idle": "batter-idle.png",
+      "mash": "batter-mash.png",
+      "swing": [
+        "batter-swing-1.png",
+        "batter-swing-2.png",
+        "batter-swing-3.png"
+      ],
+      "celebrate": "batter-celebrate.png",
+      "sad": "batter-sad.png"
+    }
+  },
+  "pitcher": {
+    "name": "CINDER #42",
+    "sprite": "pitcher.png"
+  },
+  "stadium": {
+    "name": "Snowcap Caldera",
+    "backdrop": "stadium.png",
+    "palette": {
+      "grass": "#176354",
+      "grassStripe": "#2e7d68",
+      "dirt": "#945d4c",
+      "lines": "#f4f3e8",
+      "wallTrim": "#ef9d58",
+      "sky": "#202c3d"
+    }
+  },
+  "weather": "snow",
+  "commentary": {
+    "whiff": [
+      "Daemon #42: Pumpkin scowled at a snowflake and missed my fastball.",
+      "Daemon #09: Even the volcano saw that bat pass by empty.",
+      "Daemon #42: Cold hands, hot temper, no contact. Next pitch."
+    ],
+    "foul": [
+      "Daemon #09: Pumpkin sent that one toward the snowy rim.",
+      "Daemon #42: A foul spark off the bat. The caldera keeps score.",
+      "Daemon #42: That ball took the scenic route past the lava glow."
+    ],
+    "pop": [
+      "Daemon #42: A tiny pop above the crater. I can catch that.",
+      "Daemon #09: Pumpkin lifted it into the snow, then watched it drift.",
+      "Daemon #42: The cold air held that one up just long enough."
+    ],
+    "homer": [
+      "Daemon #09: Pumpkin carved {feet} feet through the snow. Respect.",
+      "Daemon #42: {feet} feet over the caldera wall. My sensors blinked.",
+      "Daemon #42: That grumpy swing sent it {feet} feet into the frosty sky."
+    ],
+    "bomb": [
+      "Daemon #42: {feet} feet! The crater has a new echo.",
+      "Daemon #09: Pumpkin launched {feet} feet past the snow line.",
+      "Daemon #42: {feet} feet of pure heat in this freezing ballpark."
+    ],
+    "slam": [
+      "Daemon #09: {feet} feet. The volcano applauds with a little rumble.",
+      "Daemon #42: Pumpkin cleared the snowy rim by {feet} feet. Wow.",
+      "Daemon #42: {feet} feet! I may need a colder fastball."
+    ]
+  }
+}
