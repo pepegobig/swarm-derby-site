@@ -32,7 +32,7 @@ Money: none.
 {
   "version": 1,
   "id": "2026-10-09",
-  "title": "Lobster Cup",
+  "title": "Lobster",
   "shoutout": "@alice",
   "winner": "0x…",
   "auctionDay": 20735,
@@ -62,7 +62,7 @@ Money: none.
 |---|---|
 | `version` | `1` |
 | `title` | 1–24 chars |
-| `shoutout` | `null` or 1–32 chars |
+| `shoutout` | `null` or an X handle: `@` and 1–15 of A–Z a–z 0–9 _ |
 | `winner`, `auctionDay` | `null` for non-auction packs |
 | `batter.name` | 1–12 chars, `A–Z 0–9`, space, `#`, `-` |
 | `batter.number` | 1–2 digits |
@@ -106,7 +106,7 @@ Each image ≤ 300 KB; pack folder ≤ 1.2 MB; only files named in `theme.json`.
 | weather | overlay only: rain streaks, snow flakes, 15% fog haze, windy drifting leaves, meteor streaks in the sky band; ≤ 150 particles; none with `prefers-reduced-motion`. **Never changes the pitch or timing (R2).** | none |
 | commentary | swing results pick a line for the tier, `{feet}` filled | current |
 | terminal line 2 | `> SLUGGER ON DECK: <name> #<number>` | `GUS #7` |
-| load banner | `TODAY: <title>`; if `shoutout`, `designed by <shoutout>` | none |
+| load banner | `TODAY: <TITLE>` in the slam colour, centred in the header (above the field below 1024 px); if `shoutout`, `designed by <shoutout>` linked to `https://x.com/<handle>` | none |
 
 ## 6. Stale text cleanup (always, with or without a pack)
 
@@ -114,7 +114,9 @@ Each image ≤ 300 KB; pack folder ≤ 1.2 MB; only files named in `theme.json`.
   `! SWARM DERBY · <pack title or "DAILY DERBY">`.
 - `commentaryPool`: remove every line mentioning oracles, verifiers, attestations,
   signatures, quorum, panels or EIP-712. Keep pitcher-daemon banter.
-- Footer: remove `CONSENSUS: EIP-712`; show `PAID FROM THE ON-CHAIN BOARD` instead.
+- Footer: remove `CONSENSUS: EIP-712`; the right end shows the `PITCHER` badge.
+- Header: logo left, the load banner in the centre, then `AUCTION`, `PRACTICE`/`LIVE`, the wallet
+  button and an icon-only sound toggle.
 
 ## 7. Validator and fixture
 

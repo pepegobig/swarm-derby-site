@@ -15,7 +15,7 @@ override as the other addresses. Empty → none of this UI appears (R7).
 
 ## 1. Entry points
 
-- Header button `AUCTION` left of `PRACTICE`; shows `AUCTION · <lead> IMD` when there's a bid.
+- Header button `AUCTION` left of `PRACTICE`, in the slam colour (fuchsia); shows `AUCTION · <lead> IMD` when there's a bid.
 - On phones narrower than 380 px, a leaderboard footer link `Design tomorrow` instead.
 
 ## 2. Drawer (works without a wallet)
@@ -34,16 +34,15 @@ Reads `openDay()`, `auction(day)`, `minNextBid(day)`; refreshes every 15 s while
 
 | Label | Control | Field |
 |---|---|---|
-| What kind of creature is your batter? | text, max 24 | `creature` |
+| Your batter's creature | `SPIN` button: a random pick from the page's `creatureList` (real animals, living and extinct, 24 characters at most). Spin as often as you like | `creature`, and `title` (the day takes the creature's name) |
 | Batter's vibe | Hype, Chill, Grumpy, Chaotic | `vibe` |
 | Stadium | Moon, Beach, Cyber city, Volcano, Underwater, Desert | `stadium` |
 | Weather (looks only) | Clear, Windy, Rain, Snow, Fog, Meteor shower | `weather` |
-| Name the day | text, max 24, placeholder "Lobster Cup" | `title` |
-| Shoutout (optional) | text, max 32, placeholder "@yourname" | `shoutout` |
+| Your X (Twitter) link | required: an `x.com` or `twitter.com` profile link or `@handle` (handle: 1–15 of A–Z a–z 0–9 _), placeholder "https://x.com/yourname"; the page shows the handle it read | `shoutout`, always sent as `https://x.com/<handle>` (29 characters at most) |
 
-Browser-side validation mirrors the contract (printable ASCII, no `< > " \`) with live
-counts. Under the creature field: "Original creatures only: no existing characters,
-mascots or real people. Answers are reviewed before the day is built; a rejected design is
+`BID` stays disabled until a creature is spun and the X link is valid. Under the creature:
+"Spin as often as you like. The swarm draws an original batter of that kind, and the day
+takes its name. Answers are reviewed before the day is built; a rejected design is
 refunded."
 
 ### Flow

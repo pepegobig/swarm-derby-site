@@ -50,7 +50,8 @@ IMD audit before launch.
   `textContent`, never `innerHTML`. Bid text is **never** shown in the page straight from the
   chain; it only appears through a published (screened) theme pack.
 - **R5 Original content.** No existing characters, mascots, logos, artworks or real people.
-  No brands other than the winner's own shoutout. No URLs in displayed text.
+  No brands other than the winner's own X handle. No URLs in displayed text; the handle is the
+  only link (to `https://x.com/<handle>`).
 - **R6 One source.** Edit `dev/game.html`, rebuild from `dev/` with
   `python3 build.py game.html ../index.html` (setup in `dev/build.py`), commit both.
 - **R7 Practice always works.** No wallet, no network, no `themes/`: the game plays as now.

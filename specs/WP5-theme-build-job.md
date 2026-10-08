@@ -11,15 +11,19 @@ from the operator's job wallet (build fee is 0 in v1).
 |---|---|
 | `{{DATE}}`, `{{DAY}}` | theme day as `YYYY-MM-DD` and as a day number |
 | `{{WINNER}}` | `Settled.winner` |
-| `{{CREATURE}}`, `{{TITLE}}`, `{{SHOUTOUT}}` | winning `Bid` strings |
+| `{{CREATURE}}` | winning `Bid` creature |
+| `{{TITLE}}` | the creature, with each word capitalised. The bid's own `title` is not used |
+| `{{SHOUTOUT}}` | the X handle (`@name`) from the bid's `shoutout` link, or null if it is not a valid X profile link or the handle is offensive |
 | `{{VIBE}}`, `{{STADIUM}}`, `{{WEATHER}}` | enum names (WP3) |
 | `{{PRUNE}}` | dated folders older than the newest 6 in `themes/index.json` |
 | `{{HEAD}}` | the hosting project's `project.head` (`GET /jobs/:id`) |
 
-**Screen first (operator).** If the creature or title names an existing character, real
-person or brand, or is offensive, don't build: escalate to the owner for `veto` (WP6).
-Borderline but fixable ("Mario" → "an original plumber-ish creature") is fine to build,
-because the brief tells the swarm to make an original instead.
+**Screen first (operator).** A creature from the page's `creatureList` passes. Any other
+creature (a bid sent without the page): if it names an existing character, real person or
+brand, or is offensive, don't build: escalate to the owner for `veto` (WP6). Borderline but
+fixable ("Mario" → "an original plumber-ish creature") is fine to build, because the brief
+tells the swarm to make an original instead. An offensive X handle does not stop the build;
+the pack gets shoutout null.
 
 ## The job body
 
@@ -63,7 +67,7 @@ Remove these old dated entries and their folders: {{PRUNE}}. Never remove themes
 The day's design comes from the auction winner:
 - Batter: an original {{CREATURE}} baseball player with a {{VIBE}} personality.
 - Stadium: a {{STADIUM}} ballpark. Weather visuals: {{WEATHER}}.
-- Title "{{TITLE}}". Shoutout "{{SHOUTOUT}}" exactly as given (null if empty).
+- Title "{{TITLE}}". Shoutout {{SHOUTOUT}} (a quoted handle, or null).
 - winner {{WINNER}}, auctionDay {{DAY}}.
 
 Art direction:
@@ -71,7 +75,7 @@ Art direction:
   shapes, readable at 128x160. Match themes/gus/ for scale, pose and anchor point.
 - Draw the batter as code (SVG or canvas) with one function per pose and render all seven
   PNGs from it, so the character is identical in every pose. Same for the pitcher.
-- Jersey number 7 unless the title suggests another 1-2 digit number.
+- Jersey number 7.
 - Backdrop: a {{STADIUM}} scene above the fence; keep x 380-1220, y 60-480 low-detail.
   Choose a palette that suits it and keeps the field lines readable.
 - Commentary: 3-8 playful lines per result in the voice of the pitcher daemons, about this
@@ -102,8 +106,8 @@ board. A late pack is picked up by the page within a minute.
 
 ## Done when (this template, run once on a test date)
 
-1. [ ] With sample answers (`lobster`, `chaotic`, `underwater`, `rain`, `Lobster Cup`,
-       `@test`), the job validates, publishes under the same site name, and the live site
+1. [ ] With sample answers (`Lobster`, `chaotic`, `underwater`, `rain`,
+       `https://x.com/test`), the job validates, publishes under the same site name, and the live site
        shows the pack on that date.
 2. [ ] With a creature naming a famous character, the result is an original creature
        (check the screenshots).
