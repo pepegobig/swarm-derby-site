@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "id": "gus",
+  "title": "DAILY DERBY",
+  "shoutout": null,
+  "winner": null,
+  "auctionDay": null,
+  "batter": {
+    "name": "GUS",
+    "number": "7",
+    "sprites": {
+      "idle": "batter-idle.png",
+      "mash": "batter-mash.png",
+      "swing": [
+        "batter-swing-1.png",
+        "batter-swing-2.png",
+        "batter-swing-3.png"
+      ],
+      "celebrate": "batter-celebrate.png",
+      "sad": "batter-sad.png"
+    }
+  },
+  "pitcher": {
+    "name": "DAEMON #42",
+    "sprite": "pitcher.png"
+  },
+  "stadium": {
+    "name": "Swarm Derby",
+    "backdrop": "stadium.png",
+    "palette": {
+      "grass": "#166534",
+      "grassStripe": "#15803d",
+      "dirt": "#9c633a",
+      "lines": "#ffffff",
+      "wallTrim": "#1c4a36",
+      "sky": "#020617"
+    }
+  },
+  "weather": "clear",
+  "commentary": {
+    "whiff": [
+      "Daemon #07: Batter swung in a different zip code. Sit down.",
+      "Daemon #42: Optical lock established. Fastball clocked at 101 MPH.",
+      "Daemon #09: Exit velocity registers anomaly on the stadium seismograph.",
+      "Daemon #42: My sinker has a 78% groundout probability. Step up."
+    ],
+    "foul": [
+      "Daemon #42: That one landed outside the foul pole.",
+      "Daemon #42: Optical lock established. Fastball clocked at 101 MPH.",
+      "Daemon #09: Exit velocity registers anomaly on the stadium seismograph.",
+      "Daemon #42: My sinker has a 78% groundout probability. Step up."
+    ],
+    "pop": [
+      "Daemon #42: Not enough bat speed for a bomb. Mash past the power line.",
+      "Daemon #42: Optical lock established. Fastball clocked at 101 MPH.",
+      "Daemon #09: Exit velocity registers anomaly on the stadium seismograph.",
+      "Daemon #42: My sinker has a 78% groundout probability. Step up."
+    ],
+    "homer": [
+      "Daemon #42: GUS sends it {feet} feet. Counts toward today's leaderboard.",
+      "Daemon #42: Optical lock established. Fastball clocked at 101 MPH.",
+      "Daemon #09: Exit velocity registers anomaly on the stadium seismograph.",
+      "Daemon #42: My sinker has a 78% groundout probability. Step up."
+    ],
+    "bomb": [
+      "Daemon #09: {feet} FT. The upper rack array is shaking.",
+      "Daemon #42: Optical lock established. Fastball clocked at 101 MPH.",
+      "Daemon #09: Exit velocity registers anomaly on the stadium seismograph.",
+      "Daemon #42: My sinker has a 78% groundout probability. Step up."
+    ],
+    "slam": [
+      "Daemon #42: {feet} FT. That's a vault-cracker.",
+      "Daemon #42: Optical lock established. Fastball clocked at 101 MPH.",
+      "Daemon #09: Exit velocity registers anomaly on the stadium seismograph.",
+      "Daemon #42: My sinker has a 78% groundout probability. Step up."
+    ]
+  }
+}

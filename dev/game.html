@@ -115,7 +115,7 @@
       </div>
       <div class="hidden md:flex items-center gap-4 text-zinc-400 text-xs">
         <span class="hover:text-zinc-200 cursor-pointer transition">EXPLORER</span>
-        <span class="hover:text-zinc-200 cursor-pointer transition">ORACLES</span>
+        <span class="hover:text-zinc-200 cursor-pointer transition">DERBY</span>
         <span class="hover:text-zinc-200 cursor-pointer transition">$IMD</span>
         <span class="text-zinc-600">|</span>
         <span class="flex items-center gap-1.5 text-zinc-300">
@@ -153,8 +153,8 @@
       <!-- Split-Perspective Canvas -->
       <canvas id="gameCanvas" class="w-full h-full block cursor-crosshair"></canvas>
       
-      <!-- EIP-712 Attestation: renders on the jumbotron terminal so the field stays visible -->
-      <div id="oracleModal" class="jumbo-attest hidden font-mono-code" role="dialog" aria-label="Oracle attestation">
+      <!-- Swing receipt: renders on the jumbotron terminal so the field stays visible -->
+      <div id="oracleModal" class="jumbo-attest hidden font-mono-code" role="dialog" aria-label="Swing receipt">
         <div class="flex items-center justify-between gap-2 border-b border-emerald-500/30 pb-1">
           <div class="flex items-center gap-1.5 min-w-0">
             <span class="text-emerald-400 font-bold">✓</span>
@@ -354,7 +354,7 @@
         </div>
       </div>
       <div class="hidden sm:flex items-center gap-2 text-zinc-400 text-[11px]">
-        <span>CONSENSUS: <span class="text-emerald-400 font-semibold">EIP-712</span></span>
+        <span><span class="text-emerald-400 font-semibold">PAID FROM THE ON-CHAIN BOARD</span></span>
       </div>
     </div>
   </main>
@@ -666,13 +666,124 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       }
     }
 
+
+    // THEME VALIDATION START
+    const themeFolder = /^[a-z0-9-]{1,32}$/;
+    function validateTheme(t, id) {
+      const errors = [], assets = [];
+      const check = (ok, message) => { if (!ok) errors.push(message); };
+      const text = (v, min, max) => typeof v === 'string' && [...v].length >= min && [...v].length <= max && !/[<>\x00-\x1f\x7f-\x9f]|http|www\./i.test(v);
+      check(t?.version === 1, 'version must be 1');
+      check(themeFolder.test(id) && t?.id === id, 'id must match the pack folder');
+      check(text(t?.title, 1, 24), 'title must be safe text, 1–24 characters');
+      check(t?.shoutout === null || text(t?.shoutout, 1, 32), 'shoutout must be null or safe text, 1–32 characters');
+      check((t?.winner === null && t?.auctionDay === null) || (/^0x[0-9a-fA-F]{40}$/.test(t?.winner) && Number.isSafeInteger(t?.auctionDay) && t.auctionDay >= 0), 'winner and auctionDay must both be null or a valid address and day');
+      check(text(t?.batter?.name, 1, 12) && /^[A-Z0-9 #-]+$/.test(t.batter.name), 'batter.name must use A–Z, digits, space, # or -');
+      check(typeof t?.batter?.number === 'string' && /^\d{1,2}$/.test(t.batter.number), 'batter.number must be 1–2 digits');
+      function asset(name, w, h, backdrop = false) {
+        if (typeof name !== 'string' || !(backdrop ? /^[A-Za-z0-9_-]+\.(png|webp)$/i : /^[A-Za-z0-9_-]+\.png$/i).test(name)) errors.push('missing or invalid sprite/asset filename: ' + String(name));
+        else assets.push({name, w, h, transparent: !backdrop});
+      }
+      for (const key of ['idle', 'mash', 'celebrate', 'sad']) asset(t?.batter?.sprites?.[key], 128, 160);
+      check(Array.isArray(t?.batter?.sprites?.swing) && t.batter.sprites.swing.length === 3, 'swing must have exactly 3 frames');
+      if (Array.isArray(t?.batter?.sprites?.swing)) for (const name of t.batter.sprites.swing) asset(name, 128, 160);
+      if (t?.pitcher !== undefined) { check(text(t.pitcher?.name, 1, 90), 'pitcher.name must be safe text'); asset(t.pitcher?.sprite, 96, 96); }
+      check(text(t?.stadium?.name, 1, 90), 'stadium.name must be safe text');
+      if (t?.stadium?.backdrop !== undefined) asset(t.stadium.backdrop, 1600, 640, true);
+      for (const key of ['grass', 'grassStripe', 'dirt', 'lines', 'wallTrim', 'sky']) check(/^#[0-9a-f]{6}$/i.test(t?.stadium?.palette?.[key]), 'palette.' + key + ' must be #rrggbb');
+      check(['clear','windy','rain','snow','fog','meteor-shower'].includes(t?.weather), 'invalid weather');
+      for (const key of ['whiff','foul','pop','homer','bomb','slam']) {
+        const lines = t?.commentary?.[key];
+        check(Array.isArray(lines) && lines.length >= 3 && lines.length <= 8 && lines.every(v => text(v, 8, 90) && !/[{}]/.test(v.replaceAll('{feet}', ''))), 'commentary.' + key + ' must have 3–8 safe lines, 8–90 characters, only {feet} placeholders');
+      }
+      // Reject unsafe text even in fields not consumed by rendering.
+      const walk = v => { if (typeof v === 'string' && /[<>\x00-\x1f\x7f-\x9f]|http|www\./i.test(v) && !errors.some(e => e.includes('safe'))) errors.push('all text must be safe'); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+      walk(t);
+      return {errors, assets};
+    }
+    function validateThemeIndex(index) {
+      if (index?.version !== 1 || typeof index.default !== 'string' || !themeFolder.test(index.default) || !index.days || Array.isArray(index.days) || typeof index.days !== 'object' || Object.keys(index.days).length > 7 || Object.entries(index.days).some(([date,id]) => !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0,10) !== date || typeof id !== 'string' || !themeFolder.test(id))) throw Error('invalid themes/index.json');
+      return index;
+    }
+    // THEME VALIDATION END
+    let activeTheme = null, pendingTheme, themeLoading = false;
+    const themeBanner = document.createElement('div');
+    themeBanner.className = 'text-center text-emerald-300 text-xs font-mono-code';
+    document.getElementById('gameCanvas').parentElement.before(themeBanner);
+    function applyPendingTheme() {
+      if (pendingTheme === undefined || ![STATES.IDLE, STATES.RESULT].includes(gameState) || batterState === 'swing') return;
+      if (activeTheme) Object.values(activeTheme.images).forEach(image => image.close());
+      activeTheme = pendingTheme; pendingTheme = undefined;
+      themeBanner.textContent = activeTheme ? `TODAY: ${activeTheme.data.title}${activeTheme.data.shoutout ? ' · designed by ' + activeTheme.data.shoutout : ''}` : '';
+    }
+    async function refreshTheme() {
+      if (location.protocol === 'file:' || themeLoading) return;
+      themeLoading = true;
+      const controller = new AbortController();
+      const images = {};
+      const timer = setTimeout(() => controller.abort(new Error('theme loading timed out')), 5000);
+      try {
+        const get = async path => { const r = await fetch(path, {signal: controller.signal, cache:'no-cache'}); if (!r.ok) throw Error('missing ' + path); return r; };
+        const index = validateThemeIndex(await (await get('themes/index.json')).json());
+        const id = index.days[new Date().toISOString().slice(0,10)] || index.default;
+        const base = `themes/${id}/`;
+        const themeText = await (await get(base + 'theme.json')).text();
+        const data = JSON.parse(themeText);
+        const {errors, assets} = validateTheme(data, id);
+        if (errors.length) throw Error(errors.join('; '));
+        let bytes = new TextEncoder().encode(themeText).length;
+        await Promise.race([new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(Error('theme loading timed out')), {once:true})), Promise.all(assets.map(async a => {
+          const blob = await (await get(base + a.name)).blob(); bytes += blob.size;
+          if (blob.size > 300 * 1024) throw Error(a.name + ' exceeds 300 KB');
+          const header = new Uint8Array(await blob.arrayBuffer());
+          const png = [137,80,78,71,13,10,26,10].every((v,i) => header[i] === v);
+          const webp = String.fromCharCode(...header.slice(0,4)) === 'RIFF' && String.fromCharCode(...header.slice(8,12)) === 'WEBP';
+          if (!(a.name.toLowerCase().endsWith('.png') ? png : webp)) throw Error(a.name + ' has invalid image format');
+          const image = await createImageBitmap(blob);
+          if (controller.signal.aborted) { image.close(); throw Error('theme loading timed out'); }
+          if (image.width !== a.w || image.height !== a.h) { image.close(); throw Error(a.name + ' has wrong dimensions'); }
+          if (a.transparent) { const c = document.createElement('canvas'); c.width = a.w; c.height = a.h; const x = c.getContext('2d'); x.drawImage(image,0,0); const pixels = x.getImageData(0,0,a.w,a.h).data; if (!pixels.some((v,i) => i % 4 === 3 && v < 255)) { image.close(); throw Error(a.name + ' must be transparent'); } }
+          images[a.name] = image;
+        }))]);
+        if (controller.signal.aborted) throw Error('theme loading timed out');
+        if (bytes > 1.2 * 1024 * 1024) throw Error('pack exceeds 1.2 MB');
+        if (pendingTheme) Object.values(pendingTheme.images).forEach(image => image.close());
+        pendingTheme = {data, images};
+      } catch (e) { controller.abort(); Object.values(images).forEach(image => image.close()); if (pendingTheme) Object.values(pendingTheme.images).forEach(image => image.close()); pendingTheme = null; console.warn('Theme fallback: ' + e.message); }
+      finally { clearTimeout(timer); themeLoading = false; applyPendingTheme(); }
+    }
+    function themeColor(key, fallback) { return activeTheme?.data.stadium.palette[key] || fallback; }
+    function themeCommentary(tier, feet, fallback) {
+      const lines = activeTheme?.data.commentary[['whiff','foul','pop','homer','bomb','slam'][tier]];
+      return lines ? lines[Math.floor(Math.random() * lines.length)].replaceAll('{feet}', String(feet)) : fallback;
+    }
+    function drawThemeWeather(ctx) {
+      const weather = activeTheme?.data.weather;
+      if (!weather || weather === 'clear' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      ctx.save();
+      if (weather === 'fog') { ctx.fillStyle = 'rgba(220,230,240,0.15)'; ctx.fillRect(0,0,width,height); }
+      else for (let i = 0; i < 90; i++) {
+        const x = (i * 97 + frameCount * (weather === 'windy' ? 2 : 0.6)) % width;
+        const y = (i * 53 + frameCount * (weather === 'rain' ? 5 : 0.8)) % (weather === 'meteor-shower' ? height * 0.25 : height);
+        ctx.strokeStyle = weather === 'windy' ? '#d4a65a' : 'rgba(220,240,255,0.55)'; ctx.fillStyle = ctx.strokeStyle;
+        if (weather === 'snow' || weather === 'windy') { ctx.beginPath(); ctx.ellipse(x,y,weather === 'windy' ? 4 : 2,2,0.5,0,Math.PI*2); ctx.fill(); }
+        else { ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+ (weather === 'rain' ? 3 : 24),y+ (weather === 'rain' ? 12 : 8)); ctx.stroke(); }
+      }
+      ctx.restore();
+    }
+    setTimeout(refreshTheme, 0);
+    setInterval(refreshTheme, 60000);
+
     function drawIMDGrandstands(ctx) {
       const wallHeight = height * 0.42; // Upper 42% of screen
       const cellW = width / WALL_COLS;
       const cellH = wallHeight / WALL_ROWS;
 
+      if (activeTheme?.data.stadium.backdrop) {
+        ctx.drawImage(activeTheme.images[activeTheme.data.stadium.backdrop], 0, 0, width, wallHeight);
+      } else {
       // Dark background for hardware racks
-      ctx.fillStyle = '#080c0e';
+      ctx.fillStyle = themeColor('sky', '#080c0e');
       ctx.fillRect(0, 0, width, wallHeight);
 
       // Render rack matrix
@@ -744,6 +855,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         }
       });
 
+      }
       // Giant Center Scoreboard Terminal Screen (Jumbotron)
       const termW = Math.min(width * 0.58, 420);
       const termH = wallHeight * 0.72;
@@ -759,7 +871,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       // Terminal Header
       ctx.fillStyle = '#10b981';
       ctx.font = 'bold 10px monospace';
-      ctx.fillText('! 706 agents online | 24h: 314 oracles', termX + 12, termY + 16);
+      ctx.fillText('! SWARM DERBY · ' + (activeTheme?.data.title || 'DAILY DERBY'), termX + 12, termY + 16);
 
       ctx.strokeStyle = '#064e3b';
       ctx.beginPath();
@@ -770,8 +882,8 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       // Telemetry Lines
       ctx.fillStyle = '#a7f3d0';
       ctx.font = '9px monospace';
-      ctx.fillText(`> ACTIVE PITCHER : DAEMON #42 [${pitchType}]`, termX + 12, termY + 38);
-      ctx.fillText(`> SLUGGER ON DECK: GUS #7`, termX + 12, termY + 52);
+      ctx.fillText(`> ACTIVE PITCHER : ${activeTheme?.data.pitcher?.name || 'DAEMON #42'} [${pitchType}]`, termX + 12, termY + 38);
+      ctx.fillText(`> SLUGGER ON DECK: ${activeTheme?.data.batter.name || 'GUS'} #${activeTheme?.data.batter.number || '7'}`, termX + 12, termY + 52);
       ctx.fillText(`> ODDS: DERBYODDS V1 · TURNS LEFT ${turnsLeft}`, termX + 12, termY + 66);
 
       // ASCII Waveform Line
@@ -789,7 +901,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       // Dark Padded Wall
       ctx.fillStyle = '#0f291e';
       ctx.fillRect(0, wallY, width, wallH);
-      ctx.fillStyle = '#1c4a36';
+      ctx.fillStyle = themeColor('wallTrim', '#1c4a36');
       ctx.fillRect(0, wallY, width, 3); // Top yellow/green railing
 
       // Wall Distance Placards
@@ -906,7 +1018,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       const fieldHeight = height - fieldTopY;
 
       // Green Turf Base
-      ctx.fillStyle = '#166534';
+      ctx.fillStyle = themeColor('grass', '#166534');
       ctx.fillRect(0, fieldTopY, width, fieldHeight);
 
       // Alternating Lawnmower Stripes (Perspective radial fan from center field)
@@ -919,7 +1031,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         const x1 = ((i - 1) / numStripes - 0.5) * (width * 2.2) + vpX;
         const x2 = (i / numStripes - 0.5) * (width * 2.2) + vpX;
 
-        ctx.fillStyle = 'rgba(21, 128, 61, 0.45)';
+        ctx.fillStyle = activeTheme ? themeColor('grassStripe', '#15803d') + '73' : 'rgba(21, 128, 61, 0.45)';
         ctx.beginPath();
         ctx.moveTo(vpX, vpY);
         ctx.lineTo(x1, height);
@@ -936,7 +1048,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       const dirtR = G.onLine(G.R, 0.72);
 
       // Clay: home → past 3rd along the line → arc behind 2nd → past 1st along the line
-      ctx.fillStyle = '#9c633a';
+      ctx.fillStyle = themeColor('dirt', '#9c633a');
       ctx.beginPath();
       ctx.moveTo(homePlateX, homePlateY + 15);
       ctx.lineTo(dirtL.x, dirtL.y);
@@ -949,7 +1061,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       const C = { x: G.H.x, y: (G.H.y + G.B2.y) / 2 };
       const inset = (P, k) => ({ x: P.x + (C.x - P.x) * k, y: P.y + (C.y - P.y) * k });
       const g1 = inset(G.B1, 0.16), g2 = inset(G.B2, 0.3), g3 = inset(G.B3, 0.16);
-      ctx.fillStyle = '#15803d';
+      ctx.fillStyle = themeColor('grassStripe', '#15803d');
       ctx.beginPath();
       ctx.moveTo(homePlateX, homePlateY - 25);
       ctx.lineTo(g3.x, g3.y);
@@ -959,7 +1071,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       ctx.fill();
 
       // Foul lines from home plate to the poles
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = themeColor('lines', '#ffffff');
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(homePlateX, homePlateY);
@@ -983,7 +1095,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       ctx.fill();
 
       // Chalk Batter's Boxes (Perspective trapezoids on left and right)
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = themeColor('lines', '#ffffff');
       ctx.lineWidth = 2;
       // Left batter's box (where the batter stands)
       ctx.strokeRect(homePlateX - 54, homePlateY - 20, 26, 38);
@@ -991,7 +1103,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       ctx.strokeRect(homePlateX + 28, homePlateY - 20, 26, 38);
 
       // Home Plate White Pentagon
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = themeColor('lines', '#ffffff');
       ctx.beginPath();
       ctx.moveTo(homePlateX - 9, homePlateY - 10);
       ctx.lineTo(homePlateX + 9, homePlateY - 10);
@@ -1015,6 +1127,8 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       // Pitching Rubber Strip
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(moundX - 8, moundY - 2, 16, 3);
+
+      if (activeTheme?.data.pitcher) { ctx.drawImage(activeTheme.images[activeTheme.data.pitcher.sprite], moundX - 48, moundY - 48); return; }
 
       // Pitcher Daemon Hover / Windup Dynamics
       const hoverY = Math.sin(frameCount * 0.09) * 2.5;
@@ -1106,6 +1220,12 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       const sway = (batterState === 'idle') ? Math.sin(frameCount * 0.08) * 1.5 : 0;
       const hop = happy ? -Math.abs(Math.sin(frameCount * 0.2)) * 6 : 0;
       ctx.translate(jx, jy + sway + hop);
+
+      if (activeTheme) {
+        const sprites = activeTheme.data.batter.sprites;
+        const name = batterState === 'swing' ? sprites.swing[Math.min(2, Math.max(0, Math.floor((batAngle + 0.4) / 2.6 * 3)))] : sprites[batterState] || sprites.idle;
+        ctx.drawImage(activeTheme.images[name], -64, -150); ctx.restore(); return;
+      }
 
       const ink = (w = 2.6) => { ctx.strokeStyle = LINE; ctx.lineWidth = w; ctx.stroke(); };
 
@@ -2270,19 +2390,15 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     // Swarm Commentary Generator
     const commentaryPool = [
       "Daemon #42: Optical lock established. Fastball clocked at 101 MPH.",
-      "Verifier #18: Calculating launch trajectory across 25 nodes.",
       "Daemon #09: Exit velocity registers anomaly on the stadium seismograph.",
-      "Oracle #77: Attestation signed. GUS cleared the upper rack array!",
-      "Daemon #24: Clean strikeout. Umpire panel reached unanimous quorum.",
       "Daemon #42: My sinker has a 78% groundout probability. Step up.",
-      "Verifier #51: 500+ FT moonshot verified by EIP-712 signature."
     ];
 
     function postCommentary(custom) {
       const quote = custom || commentaryPool[Math.floor(Math.random() * commentaryPool.length)];
       commentaryTicker.style.opacity = '0';
       setTimeout(() => {
-        commentaryTicker.innerHTML = quote;
+        commentaryTicker.textContent = quote;
         commentaryTicker.style.opacity = '1';
       }, 150);
     }
@@ -2549,9 +2665,9 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         tier >= 4 ? 'gold' : 'green'
       );
 
-      postCommentary(tier === 5
+      postCommentary(themeCommentary(tier, flightTargetDistance, tier === 5
         ? `Daemon #42: ${flightTargetDistance} FT. That's a vault-cracker. 10% of the vault pays out on mainnet.`
-        : `Daemon #42: GUS sends it ${flightTargetDistance} feet. Counts toward today's leaderboard.`);
+        : `Daemon #42: GUS sends it ${flightTargetDistance} feet. Counts toward today's leaderboard.`));
     }
 
     function handleWeakHit(title, sub, line) {
@@ -2562,7 +2678,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       updateStatsHUD();
 
       showBanner(title, sub, 'red');
-      postCommentary(line);
+      postCommentary(themeCommentary(lastRoll?.tier ?? 2, lastRoll?.feet ?? 0, line));
       buttonLabel.textContent = turnsLeft > 0 ? 'TRY AGAIN' : BUY_PACK_LABEL;
       buttonEmoji.textContent = turnsLeft > 0 ? '🔄' : '🎟️';
       primaryActionBtn.className = "tactile-button w-full py-2.5 sm:py-3 px-3 bg-gradient-to-b from-zinc-700 to-zinc-900 hover:from-zinc-600 hover:to-zinc-800 text-white font-extrabold rounded-lg border-t-2 border-zinc-500 text-xs sm:text-sm tracking-wider font-mono-code flex items-center justify-center gap-1.5 shadow-xl";
@@ -2576,7 +2692,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       updateStatsHUD();
 
       showBanner('WHIFF!', 'SWING AND A MISS • TURN SPENT', 'red');
-      postCommentary(`Daemon #07: Batter swung in a different zip code. Sit down.`);
+      postCommentary(themeCommentary(0, 0, `Daemon #07: Batter swung in a different zip code. Sit down.`));
 
       buttonLabel.textContent = turnsLeft > 0 ? 'STEP UP TO PLATE' : BUY_PACK_LABEL;
       buttonEmoji.textContent = turnsLeft > 0 ? '🔄' : '🎟️';
@@ -2715,6 +2831,8 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       ctx.clearRect(0, 0, width, height);
 
       // 1. TOP HALF: IMD Modular Control Wall Grandstands
+      applyPendingTheme();
+      ctx.fillStyle = themeColor('sky', '#020617'); ctx.fillRect(0,0,width,height);
       drawIMDGrandstands(ctx);
 
       // 2. BOTTOM HALF: Perspective Green Baseball Field & Clay Diamond
@@ -2725,6 +2843,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
 
       // 4. FOREGROUND: Slugger in Batter's Box
       drawSlugger(ctx);
+      drawThemeWeather(ctx);
 
       // 5. BALL & TIMING RETICLE
       drawPitchAndBall(ctx);
