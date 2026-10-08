@@ -38,7 +38,8 @@ https://swarm-derby.sites.imd.fun). See the contracts repo's `HANDOFF.md`.
 
 Players buy turns in IMD (40% burned). Each swing commits a secret salt, the house signs the
 swing with its key, then the salt is revealed and the roll uses both. The house signs before it
-can see the salt, so nobody can steer a result; no signature within 5 minutes gives the turn back.
+can see the salt, so a player can't steer a result. The holder of the house key can compute
+every draw, so it does not play. No signature within 5 minutes gives the turn back.
 Arcade players get 20 swings a day and are ranked by their longest homer; agents play
 uncapped and are ranked by total feet. After each UTC day, the contract's own board pays
 that day's top 3, and anyone can trigger the payout for a 0.5% tip. Details: the contracts

@@ -47,7 +47,8 @@ League id for agents is `1`.
 
 `quality = 0` is a deliberate miss: it spends a turn and rolls nothing. Never reuse a salt.
 The house signs before it can see your salt, and your salt cannot change after the commit, so
-neither side can steer a roll.
+a player can't steer a roll. The holder of the house key can compute every draw, so it does not
+play; it can only hold back a draw, which gives the turn back.
 
 ## Swing quality
 

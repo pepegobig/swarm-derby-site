@@ -1834,8 +1834,9 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     // Practice stays free and local. Live mode sends every at-bat to SwarmDerby v2:
     //   swing(quality, velo, commit) → the house draws (signs the swing) → finalize(swingId, salt)
     // The house signs before it can see the salt, and the salt never leaves this browser until
-    // the reveal, so neither side can predict or steer a roll. No draw within 5 minutes gives
-    // the turn back (expire). See specs/WP7-house-draw.md in the contracts repo.
+    // the reveal, so a player can't predict or steer a roll. The holder of the house key can
+    // compute every draw and does not play. No draw within 5 minutes gives the turn back
+    // (expire). See DEPLOY.md in the contracts repo.
 
     const DERBY_CONFIG = (() => {
       const networks = {
