@@ -20,10 +20,6 @@
       "sad": "batter-sad.png"
     }
   },
-  "pitcher": {
-    "name": "DAEMON #42",
-    "sprite": "pitcher.png"
-  },
   "stadium": {
     "name": "Swarm Derby",
     "palette": {

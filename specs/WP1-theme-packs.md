@@ -72,7 +72,8 @@ Money: none.
 | `stadium.palette` | all six keys, `#rrggbb` |
 | `weather` | `clear`, `windy`, `rain`, `snow`, `fog` or `meteor-shower` |
 | `commentary` | each key 3–8 lines, 8–90 chars; `{feet}` is the only placeholder |
-| all text | no `<`, `>`, `http`, `www.`, control characters |
+| all text | printable ASCII only; no `<`, `>`, `http` or `www.` |
+| shown text (title, names, commentary) | also no domain-like token (`name.tld`) and no `0x` followed by a hex digit |
 
 ## 3. Assets
 
@@ -99,7 +100,7 @@ Each image ≤ 300 KB; pack folder ≤ 1.2 MB; only files named in `theme.json`.
 
 | Where | With a pack | Without |
 |---|---|---|
-| `drawSlugger` | sprite for the state at `(homePlateX − 106, homePlateY − 150)`, keeping today's shake/sway/hop transforms; swing frame 1/2/3 as the bat passes ⅓ and ⅔ of its sweep | current code |
+| `drawSlugger` | sprite for the state at `(homePlateX − 106, homePlateY − 150)`, keeping today's shake/sway/hop transforms; swing frame 1/2/3 as the bat passes ⅓ and ⅔ of its sweep. The `gus` pack keeps the current code, so GUS stays animated | current code |
 | `drawPitcherOnCenterMound` | `pitcher.sprite` centred on the mound | current code |
 | `drawIMDGrandstands` | `backdrop` scaled to the wall, then the terminal | current |
 | `drawPerspectiveField` | `palette` | current colours |
@@ -121,10 +122,13 @@ Each image ≤ 300 KB; pack folder ≤ 1.2 MB; only files named in `theme.json`.
 ## 7. Validator and fixture
 
 - `node dev/validate-theme.mjs themes/<id>` checks §2–3 (pixel sizes read from file headers),
-  prints each failure, exits non-zero. `--all` checks `index.json` and every referenced pack.
-- `dev/render-gus.mjs` renders today's `drawSlugger` poses and pitcher to the sizes in §3 and
-  writes `themes/gus/theme.json` with today's colours, `weather: "clear"`, and the cleaned
-  commentary. The `gus` pack has no backdrop, so the built-in racks keep their animation.
+  prints each failure, exits non-zero. `--all` checks `index.json`, every referenced pack, and
+  that `themes/` holds nothing else (any other file would be published on the game's origin).
+- `dev/render-gus.mjs` renders today's `drawSlugger` poses to the sizes in §3 and writes
+  `themes/gus/theme.json` with today's colours, `weather: "clear"`, and the cleaned
+  commentary. The poses are reference sprites (the scale and anchor for other packs). The
+  `gus` pack has no pitcher and no backdrop, and the page draws the built-in GUS for it, so
+  GUS, the pitcher daemon and the racks keep their animation.
 
 ## Done when
 

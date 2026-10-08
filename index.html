@@ -752,7 +752,10 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     function validateTheme(t, id) {
       const errors = [], assets = [];
       const check = (ok, message) => { if (!ok) errors.push(message); };
-      const text = (v, min, max) => typeof v === 'string' && [...v].length >= min && [...v].length <= max && !/[<>\x00-\x1f\x7f-\x9f]|http|www\./i.test(v);
+      // Printable ASCII only (no bidi or look-alike characters). Shown text also may not hold
+      // a domain name or a 0x hex value, so a pack cannot point players at a site or address.
+      const unsafe = v => /[^\x20-\x7e]|[<>]|http|www\./i.test(v);
+      const text = (v, min, max) => typeof v === 'string' && v.length >= min && v.length <= max && !unsafe(v) && !/[a-z0-9-]\.[a-z]{2,}|0x[0-9a-f]/i.test(v);
       check(t?.version === 1, 'version must be 1');
       check(themeFolder.test(id) && t?.id === id, 'id must match the pack folder');
       check(text(t?.title, 1, 24), 'title must be safe text, 1–24 characters');
@@ -777,7 +780,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         check(Array.isArray(lines) && lines.length >= 3 && lines.length <= 8 && lines.every(v => text(v, 8, 90) && !/[{}]/.test(v.replaceAll('{feet}', ''))), 'commentary.' + key + ' must have 3–8 safe lines, 8–90 characters, only {feet} placeholders');
       }
       // Reject unsafe text even in fields not consumed by rendering.
-      const walk = v => { if (typeof v === 'string' && /[<>\x00-\x1f\x7f-\x9f]|http|www\./i.test(v) && !errors.some(e => e.includes('safe'))) errors.push('all text must be safe'); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+      const walk = v => { if (typeof v === 'string' && unsafe(v) && !errors.some(e => e.includes('safe'))) errors.push('all text must be safe'); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
       walk(t);
       return {errors, assets};
     }
@@ -1319,7 +1322,8 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       const hop = happy ? -Math.abs(Math.sin(frameCount * 0.2)) * 6 : 0;
       ctx.translate(jx, jy + sway + hop);
 
-      if (activeTheme) {
+      // The default pack keeps the built-in animated GUS; its sprites are the reference poses.
+      if (activeTheme && activeTheme.data.id !== 'gus') {
         const sprites = activeTheme.data.batter.sprites;
         const name = batterState === 'swing' ? sprites.swing[Math.min(2, Math.max(0, Math.floor((batAngle + 0.4) / 2.6 * 3)))] : sprites[batterState] || sprites.idle;
         ctx.drawImage(activeTheme.images[name], -64, -150); ctx.restore(); return;
@@ -1851,12 +1855,15 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
         local: { name: 'Local devnet', chainId: 31337, rpc: 'http://127.0.0.1:8545', explorer: '', imd: '', derby: '', auction: '' }
       };
       const qs = new URLSearchParams(location.search);
-      const key = networks[qs.get('network')] ? qs.get('network') : 'robinhood';
+      // The local devnet only on a local page: a shared link must never add a network with
+      // someone else's RPC to a player's wallet.
+      const localPage = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+      const key = networks[qs.get('network')] && (qs.get('network') !== 'local' || localPage) ? qs.get('network') : 'robinhood';
       const net = { ...networks[key], key };
       // Address overrides only for the local devnet: a shared link must never be able to
       // point real players at a different contract.
       if (key === 'local') for (const k of ['rpc', 'derby', 'imd', 'auction']) if (qs.get(k)) net[k] = qs.get(k);
-      return { ...net, sessionFundEth: '0.0003', sessionLowEth: '0.00005' };
+      return { ...net, sessionFundEth: '0.0003', sessionCapEth: '0.002', sessionLowEth: '0.00005' };
     })();
 
     const DERBY_ABI = [
@@ -2275,11 +2282,12 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       } catch (e) {}
     }
 
-    /** Session funding: enough for ~25 swings at today's gas, never less than the floor. */
+    /** Session funding: enough for ~25 swings at today's gas, between the floor and the cap. */
     function sessionFundWei() {
       const floor = ethers.parseEther(DERBY_CONFIG.sessionFundEth);
+      const cap = ethers.parseEther(DERBY_CONFIG.sessionCapEth);
       const want = live.swingGasWei * 25n;
-      return want > floor ? want : floor;
+      return want < floor ? floor : want > cap ? cap : want;
     }
 
     function sessionUsable() {

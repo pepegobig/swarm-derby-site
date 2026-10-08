@@ -45,6 +45,12 @@ function pack(dir) {
 }
 const arg=process.argv[2];
 if(arg==='--all') {
-  try {const index=context.validateThemeIndex(JSON.parse(fs.readFileSync('themes/index.json','utf8'))); for(const id of new Set([index.default,...Object.values(index.days)])) pack(path.join('themes',id));} catch(e) {fail(e.message);}
+  try {
+    const index=context.validateThemeIndex(JSON.parse(fs.readFileSync('themes/index.json','utf8')));
+    const ids=new Set([index.default,...Object.values(index.days)]);
+    // Anything else under themes/ would be published on the game's origin.
+    for(const entry of fs.readdirSync('themes',{withFileTypes:true})) if(!(entry.isFile()&&entry.name==='index.json')&&!(entry.isDirectory()&&ids.has(entry.name))) fail(path.join('themes',entry.name)+': not index.json or a pack folder named in it');
+    for(const id of ids) pack(path.join('themes',id));
+  } catch(e) {fail(e.message);}
 } else if(arg) pack(arg); else fail('usage: node dev/validate-theme.mjs themes/<id> | --all');
 process.exitCode=failures?1:0;

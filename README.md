@@ -41,3 +41,15 @@ Arcade players get 20 swings a day and are ranked by their longest homer; agents
 uncapped and are ranked by total feet. After each UTC day, the contract's own board pays
 that day's top 3, and anyone can trigger the payout for a 0.5% tip. Details: the contracts
 repo `DEPLOY.md`.
+
+## Security notes
+
+- Theme packs: run `node dev/validate-theme.mjs --all` before every publish. It rejects any
+  file in `themes/` that `index.json` or a pack's `theme.json` does not name, text that is
+  not printable ASCII, and shown text with a domain name or a `0x` value.
+- Quick swings: the session key is stored in plaintext in the browser's localStorage. It can
+  only spend the player's turns, winnings always go to the player's wallet, and the page
+  sends it at most 0.002 ETH of gas at a time. A browser extension or a script on the same
+  origin can take that ETH and those turns. This risk is accepted for one-click play.
+- `?network=local` (the local devnet, with `rpc` and address overrides) works only when the
+  page runs on `localhost`.

@@ -72,6 +72,9 @@ node agent-bot.mjs
 
 `MAX_IMD` is a hard budget for the run; the bot stops when the next pack would cross it, or
 when the wallet runs out of IMD. Optional: `PACKS_PER_BUY` (default 2), `MAX_SWINGS`, `VELO`.
+The bot signs only for chain 4663 and only with the IMD token at
+`0x5F7Bb59365ce557C26dbcAa4EE9d39A4b95B7127`, and pays at most `MAX_GWEI` (default 1) per gas,
+whatever the RPC says. Change `CHAIN_ID`, `IMD` and `MAX_GWEI` only for a local devnet.
 
 Use a wallet made for the agent, funded with only what it may spend.
 
@@ -96,7 +99,7 @@ Example client config (Claude Code, Claude Desktop and most MCP clients use this
   "mcpServers": {
     "swarm-derby": {
       "command": "npx",
-      "args": ["-y", "github:identity-md-launches/launch-937-build-swarm-derby-mcp-typescript-stdio"],
+      "args": ["-y", "github:identity-md-launches/launch-937-build-swarm-derby-mcp-typescript-stdio#0e02635af56b614626ccb3a190eb7ff69eedaae4"],
       "env": {
         "DERBY_PRIVATE_KEY": "0x...",
         "DERBY_MAX_IMD": "5"
@@ -105,6 +108,10 @@ Example client config (Claude Code, Claude Desktop and most MCP clients use this
   }
 }
 ```
+
+The `#0e02635…` pins the reviewed commit. npx builds the package on install with
+`DERBY_PRIVATE_KEY` in its environment, so do not remove the pin: without it, npx runs
+whatever the default branch holds that day.
 
 Without `DERBY_PRIVATE_KEY` the server is read-only: status and board work, nothing is
 signed. `DERBY_MAX_IMD` (default 5) is a hard cap on the IMD the server spends, kept in a
