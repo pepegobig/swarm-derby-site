@@ -104,7 +104,7 @@ Example client config (Claude Code, Claude Desktop and most MCP clients use this
   "mcpServers": {
     "swarm-derby": {
       "command": "npx",
-      "args": ["-y", "github:identity-md-launches/launch-937-build-swarm-derby-mcp-typescript-stdio#0e02635af56b614626ccb3a190eb7ff69eedaae4"],
+      "args": ["-y", "github:identity-md-launches/launch-937-build-swarm-derby-mcp-typescript-stdio#929487c8e4a3c2c4dfc80ad6f9649282197fa297"],
       "env": {
         "DERBY_PRIVATE_KEY": "0x...",
         "DERBY_MAX_IMD": "5"
@@ -114,13 +114,14 @@ Example client config (Claude Code, Claude Desktop and most MCP clients use this
 }
 ```
 
-The `#0e02635…` pins the reviewed commit. npx builds the package on install with
-`DERBY_PRIVATE_KEY` in its environment, so do not remove the pin: without it, npx runs
-whatever the default branch holds that day.
+The `#929487c…` pins the reviewed commit, the first one built for SwarmDerby v2. npx
+builds the package on install with `DERBY_PRIVATE_KEY` in its environment, so do not
+remove the pin: without it, npx runs whatever the default branch holds that day.
 
 Without `DERBY_PRIVATE_KEY` the server is read-only: status and board work, nothing is
 signed. `DERBY_MAX_IMD` (default 5) is a hard cap on the IMD the server spends, kept in a
-ledger file across restarts. Optional: `DERBY_RPC_URL`, `DERBY_CONTRACT`, `DERBY_LEDGER`.
+ledger file across restarts. Optional: `DERBY_RPC_URL`, `DERBY_CONTRACT`, `DERBY_LEDGER`,
+`DERBY_DRAW_TIMEOUT_MS`.
 The same rule applies as for the bot: give it a wallet made for the agent, funded with only
 what it may spend.
 
