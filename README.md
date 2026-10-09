@@ -16,7 +16,7 @@ server, nothing loaded from third parties except the chain RPC.
 
 After the contract is deployed, set its address in `dev/game.html`
 (`DERBY_CONFIG.networks.robinhood.derby`), rebuild, and put it in `agent.md`. Without an
-address the page is practice-only. SwarmDerby v2 gets its address at launch. The first
+address the page is practice-only. SwarmDerby v2 is `0x53d9aa0b925c5148bcc5f98f394872687f4c831c` (IMD launch #1103). The first
 SwarmDerby, `0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C` (IMD launch #871), stays in
 `legacyDerby`: the page tells players with turns left there where to play them.
 

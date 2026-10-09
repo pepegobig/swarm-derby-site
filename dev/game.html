@@ -1845,7 +1845,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
           rpc: 'https://rpc.mainnet.chain.robinhood.com',
           explorer: 'https://robinhoodchain.blockscout.com',
           imd: '0x5F7Bb59365ce557C26dbcAa4EE9d39A4b95B7127',
-          derby: '', // SwarmDerby v2: set at launch
+          derby: '0x53d9aa0b925c5148bcc5f98f394872687f4c831c', // SwarmDerby v2, IMD launch #1103
           auction: '0x0d81989ea1a4fdafb309ce738271d3bd659dab7b', // DerbyAuction, IMD launch #1053
           // The first SwarmDerby (IMD launch #871) and the page that still plays it, for leftover turns.
           legacyDerby: '0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C',
@@ -1931,7 +1931,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       TooEarly: 'Too early to reveal. Retrying soon.',
       NotExpired: 'Swing has not expired yet.',
       CommitUsed: 'That swing was already sent. Swing again.',
-      NoHouseKey: 'Draws are paused. No turn was used.',
+      NoHouseKey: 'Draws are paused. Nothing was spent. Try again later.',
       BadSession: 'Quick-swing key refused. Turn quick swings on again.',
       TransferFailed: 'IMD transfer failed. Check balance and approval.',
       NothingToSettle: 'Nothing to pay out right now.',
