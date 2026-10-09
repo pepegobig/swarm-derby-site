@@ -50,7 +50,9 @@ reports the balance weekly and warns when fewer than 14 nights remain.
 
 1. WP1 built and published (the site serves `themes/`).
 2. WP3 built, IMD-audited, launched with `launch.open` `evm_contracts`: owner = seat owner
-   wallet, `imd` = `0x5F7Bb59365ce557C26dbcAa4EE9d39A4b95B7127`, `derby` =
-   `0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C`, `studio` = operator address, `buildFee` = 0.
+   wallet, `imd` = `0x5F7Bb59365ce557C26dbcAa4EE9d39A4b95B7127`, `derby` = the SwarmDerby the
+   page plays, `studio` = operator address, `buildFee` = 0. The live auction is
+   `0x9794943b691c76be4247f252adc920d9c33ee8ca` (IMD launch #1109) for SwarmDerby v2,
+   `0x53d9aa0b925c5148bcc5f98f394872687f4c831c`.
 3. WP4 built with the auction address; site republished.
 4. Seed day one: the owner or operator places the first 2 IMD bid so the drawer isn't empty.

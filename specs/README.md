@@ -5,9 +5,11 @@ questions, the IMD swarm builds that day's batter and stadium from the answers, 
 winning bid becomes a bonus prize for that day's arcade top 3, paid from the live contract's
 own board. No oracle anywhere.
 
-Written against `swarm-derby-contracts@b1a01be` (54 tests; SwarmDerby live at
+Written against `swarm-derby-contracts@b1a01be` (54 tests; the first SwarmDerby,
 `0xBa58BC6b5aCf8043DAEa2Bf1BF6C1c09cF84b03C`, IMD launch #871) and
-`swarm-derby-site@4ab6185`.
+`swarm-derby-site@4ab6185`. The page now plays SwarmDerby v2,
+`0x53d9aa0b925c5148bcc5f98f394872687f4c831c` (IMD launch #1103), and its DerbyAuction is
+`0x9794943b691c76be4247f252adc920d9c33ee8ca` (IMD launch #1109).
 
 ## Build order
 
