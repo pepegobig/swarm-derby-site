@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "id": "2026-10-11",
+  "title": "Zebra",
+  "shoutout": "@rsi_am",
+  "winner": "0xd4d1aeef7b978ab7dbc947205bafffde01b41018",
+  "auctionDay": 20737,
+  "batter": {
+    "name": "ZOOMSTRIPE",
+    "number": "7",
+    "sprites": {
+      "idle": "batter-idle.png",
+      "mash": "batter-mash.png",
+      "swing": [
+        "batter-swing-1.png",
+        "batter-swing-2.png",
+        "batter-swing-3.png"
+      ],
+      "celebrate": "batter-celebrate.png",
+      "sad": "batter-sad.png"
+    }
+  },
+  "pitcher": {
+    "name": "GLITCH #42",
+    "sprite": "pitcher.png"
+  },
+  "stadium": {
+    "name": "Neonfog Yard",
+    "backdrop": "stadium.png",
+    "palette": {
+      "grass": "#14614f",
+      "grassStripe": "#1b7a62",
+      "dirt": "#7a5268",
+      "lines": "#f2f7ff",
+      "wallTrim": "#2ee6f0",
+      "sky": "#120a2a"
+    }
+  },
+  "weather": "fog",
+  "commentary": {
+    "whiff": [
+      "Daemon #42: Zoomstripe hyped the crowd, then swung at pure fog.",
+      "Daemon #09: All that bounce and no contact. The neon signs saw it all.",
+      "Daemon #42: My fastball hid in the mist. Stripes found nothing.",
+      "Daemon #07: Loud swing, quiet bat. Next pitch, zebra."
+    ],
+    "foul": [
+      "Daemon #42: Zoomstripe clipped it into the fog behind the rail line.",
+      "Daemon #09: Foul ball, straight toward the pink tower windows.",
+      "Daemon #42: Close, stripes. The mist swallowed that one sideways.",
+      "Daemon #07: That foul has a neon glow on it now."
+    ],
+    "pop": [
+      "Daemon #42: A pop-up into the haze. I can hear it coming down.",
+      "Daemon #09: Zoomstripe got under it. The fog caught it first.",
+      "Daemon #42: High and soft over the skyline. Not enough hype."
+    ],
+    "homer": [
+      "Daemon #42: Zoomstripe sent it {feet} feet into the neon fog. Wow.",
+      "Daemon #09: {feet} feet! The zebra is dancing around first base.",
+      "Daemon #42: That ball rode the rail line {feet} feet. Respect."
+    ],
+    "bomb": [
+      "Daemon #09: {feet} feet past the towers. My visor flickered.",
+      "Daemon #42: Zoomstripe launched {feet} feet straight through the mist.",
+      "Daemon #07: {feet} feet! Somebody turn the city lights up."
+    ],
+    "slam": [
+      "Daemon #42: {feet} feet! The whole skyline is buzzing for the zebra.",
+      "Daemon #09: Zoomstripe cleared the fog bank by {feet} feet. Unreal.",
+      "Daemon #42: {feet} feet. I need a new pitch and a new daemon.",
+      "Daemon #07: Stripes, hype and {feet} feet of pure voltage."
+    ]
+  }
+}
