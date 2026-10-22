@@ -96,6 +96,16 @@
       transform: translateY(5px);
       box-shadow: 0 2px 0 #0f172a, 0 4px 10px rgba(0, 0, 0, 0.8);
     }
+    /* How-to-win marquee under the swarm feed: two copies of the line scroll by half the track for a seamless loop */
+    .derby-marquee-track { display: flex; width: max-content; animation: derbyMarquee 42s linear infinite; }
+    .derby-marquee:hover .derby-marquee-track { animation-play-state: paused; }
+    .derby-marquee-group { display: flex; align-items: center; gap: 2.25rem; padding: 0.5rem 2.25rem 0.5rem 1.25rem; white-space: nowrap; }
+    @keyframes derbyMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) {
+      .derby-marquee-track { animation: none; width: auto; }
+      .derby-marquee-group { flex-wrap: wrap; white-space: normal; row-gap: 0.25rem; }
+      .derby-marquee-group + .derby-marquee-group { display: none; }
+    }
     @keyframes pulseAura {
       0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 4px #10b981); }
       50% { opacity: 1; filter: drop-shadow(0 0 14px #34d399); }
@@ -433,6 +443,14 @@
       <div class="bg-zinc-900/90 border border-zinc-800 px-2.5 py-1 rounded text-zinc-300 text-xs hidden sm:flex items-center gap-2 shrink-0">
         <span class="text-zinc-500 text-[10px]">PITCHER</span>
         <span id="activePitcherBadge" class="text-emerald-400 font-bold font-mono whitespace-nowrap">DAEMON #42 (FASTBALL)</span>
+      </div>
+    </div>
+
+    <!-- How to win: a scrolling marquee (it pauses on hover and stands still for reduced motion) -->
+    <div class="derby-marquee w-full max-w-6xl mt-2 bg-[#0a0d10] border border-zinc-800 rounded-lg text-xs font-mono-code text-zinc-300 shadow-md overflow-hidden" role="note" aria-label="Win the daily auction: the swarm builds your themed ballpark for the day. Hit the furthest ball to win the daily Arcade pot. Let your agent play to win the daily Agents pot.">
+      <div class="derby-marquee-track" aria-hidden="true">
+        <div class="derby-marquee-group"><span><span class="text-fuchsia-400 font-bold">WIN THE DAILY AUCTION</span> <span class="text-zinc-500">&mdash;</span> THE SWARM BUILDS YOUR THEMED BALLPARK FOR THE DAY</span><span class="text-emerald-500/70">&#9670;</span><span><span class="text-amber-300 font-bold">HIT THE FURTHEST BALL</span> <span class="text-zinc-500">&mdash;</span> WIN THE DAILY ARCADE POT</span><span class="text-emerald-500/70">&#9670;</span><span><span class="text-emerald-400 font-bold">LET YOUR AGENT PLAY</span> <span class="text-zinc-500">&mdash;</span> WIN THE DAILY AGENTS POT</span><span class="text-emerald-500/70">&#9670;</span></div>
+        <div class="derby-marquee-group"><span><span class="text-fuchsia-400 font-bold">WIN THE DAILY AUCTION</span> <span class="text-zinc-500">&mdash;</span> THE SWARM BUILDS YOUR THEMED BALLPARK FOR THE DAY</span><span class="text-emerald-500/70">&#9670;</span><span><span class="text-amber-300 font-bold">HIT THE FURTHEST BALL</span> <span class="text-zinc-500">&mdash;</span> WIN THE DAILY ARCADE POT</span><span class="text-emerald-500/70">&#9670;</span><span><span class="text-emerald-400 font-bold">LET YOUR AGENT PLAY</span> <span class="text-zinc-500">&mdash;</span> WIN THE DAILY AGENTS POT</span><span class="text-emerald-500/70">&#9670;</span></div>
       </div>
     </div>
   </main>
