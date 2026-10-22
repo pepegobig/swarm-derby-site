@@ -408,7 +408,7 @@
           </div>
         </div>
 
-        <!-- Compact Tactile Mash / Swing Button -->
+        <!-- Compact Tactile Bash / Swing Button -->
         <div class="w-full pointer-events-auto">
           <button id="primaryActionBtn" class="tactile-button w-full py-2.5 sm:py-3 px-3 bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-black font-extrabold rounded-lg border-t-2 border-emerald-300 text-xs sm:text-sm tracking-wider font-mono-code flex items-center justify-center gap-1.5 shadow-xl">
             <span id="buttonEmoji">⚾</span>
@@ -426,23 +426,6 @@
         <div class="text-[9px] sm:text-[10px] font-mono-code text-zinc-400 text-right bg-black/80 px-2 py-0.5 rounded border border-zinc-800 backdrop-blur pointer-events-auto">
           <kbd class="bg-zinc-800 text-zinc-300 px-1 py-0.2 rounded border border-zinc-700 text-[9px]">SPACE</kbd> or <span class="text-emerald-400 font-semibold">TAP</span> to Hit
         </div>
-      </div>
-    </div>
-
-    <!-- Swarm Live Commentary Ticker -->
-    <div class="w-full max-w-6xl mt-2 bg-[#0a0d10] border border-zinc-800 rounded-lg p-2.5 flex items-center gap-3 text-xs font-mono-code shadow-md">
-      <div class="flex items-center gap-1.5 bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        SWARM FEED
-      </div>
-      <div class="overflow-hidden whitespace-nowrap relative flex-1 text-zinc-300">
-        <div id="commentaryTicker" class="transition-opacity duration-300">
-          <span class="text-emerald-400 font-semibold">Daemon #42:</span> Stationary on dead-center mound. Fastball calibrated at 99.4 MPH. Let's see GUS swing.
-        </div>
-      </div>
-      <div class="bg-zinc-900/90 border border-zinc-800 px-2.5 py-1 rounded text-zinc-300 text-xs hidden sm:flex items-center gap-2 shrink-0">
-        <span class="text-zinc-500 text-[10px]">PITCHER</span>
-        <span id="activePitcherBadge" class="text-emerald-400 font-bold font-mono whitespace-nowrap">DAEMON #42 (FASTBALL)</span>
       </div>
     </div>
 
@@ -683,6 +666,11 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
 
     let gameState = STATES.IDLE;
     let mashPower = 0.0;          // 0.0 to 1.0
+    // Shared bash counter (goal 1,000,000): every press in the bash window, practice included, reported per swing
+    const BASH_COUNTER = 'https://swarm-derby-bash.swarmderby.workers.dev';
+    const BASH_GOAL = 1000000;
+    let bashTotal = null;         // the shared total, null until the counter answers
+    let bashSwing = 0;            // presses in the current bash window, not yet reported
     let mashCountdown = 2.4;      // Mash window duration
     let screenShake = 0;
     let frameCount = 0;
@@ -1013,6 +1001,38 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       }
       ctx.fillStyle = '#34d399';
       ctx.fillText(`[ ${dots} ]`, termX + 12, termY + 84);
+
+      // Bash counter: the shared total centered above a power bar toward 1,000,000
+      {
+        const shown = bashTotal == null ? null : bashTotal + bashSwing;
+        const cx = termX + termW / 2, bx = termX + 12, bw = termW - 24, bh = 7;
+        const by = termY + termH - 12 - bh;
+        const roomy = termH >= 130;
+        ctx.textAlign = 'center';
+        if (roomy) {
+          ctx.fillStyle = '#34d399';
+          ctx.font = '9px monospace';
+          ctx.fillText('BASHES TO 1,000,000', cx, by - 25);
+        }
+        ctx.fillStyle = gameState === STATES.MASHING ? '#fde68a' : '#fbbf24';
+        ctx.font = `bold ${roomy ? 16 : 12}px monospace`;
+        ctx.fillText(shown == null ? '- - -' : shown.toLocaleString('en-US') + (roomy ? '' : ' / 1M'), cx, by - 7);
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#06130d';
+        ctx.fillRect(bx, by, bw, bh);
+        const frac = shown == null ? 0 : Math.min(1, shown / BASH_GOAL);
+        if (frac > 0) {
+          const g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+          g.addColorStop(0, '#10b981'); g.addColorStop(0.6, '#fbbf24'); g.addColorStop(1, '#f43f5e');
+          ctx.fillStyle = g;
+          ctx.fillRect(bx, by, Math.max(2, bw * frac), bh);
+        }
+        ctx.fillStyle = 'rgba(4,7,8,0.9)';
+        for (let i = 1; i < 10; i++) ctx.fillRect(Math.round(bx + (bw * i) / 10), by, 1, bh);
+        ctx.strokeStyle = '#064e3b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+      }
 
       // Outfield Wall Divider (Separates hardware grandstands from field)
       const wallY = wallHeight - 12;
@@ -2964,6 +2984,7 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     ];
 
     function postCommentary(custom) {
+      if (!commentaryTicker) return; // the feed bar was removed from the page
       const quote = custom || commentaryPool[Math.floor(Math.random() * commentaryPool.length)];
       commentaryTicker.style.opacity = '0';
       setTimeout(() => {
@@ -3098,6 +3119,23 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       gameState = STATES.RESULT;
     }
 
+    async function fetchBashTotal() {
+      try {
+        const r = await fetch(`${BASH_COUNTER}/total`, { cache: 'no-store' });
+        if (r.ok) { const j = await r.json(); if (Number.isFinite(j.total)) bashTotal = Math.max(bashTotal ?? 0, j.total); }
+      } catch (_) { /* the counter is optional: the game plays without it */ }
+    }
+    function reportBashes(n) {
+      n = Math.min(60, Math.max(0, Math.floor(n)));
+      if (!n) return;
+      if (bashTotal != null) bashTotal += n;
+      fetch(`${BASH_COUNTER}/bash`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ n }), keepalive: true })
+        .then((r) => r.json()).then((j) => { if (Number.isFinite(j.total)) bashTotal = Math.max(bashTotal ?? 0, j.total); })
+        .catch(() => {});
+    }
+    fetchBashTotal();
+    setInterval(() => { if (!document.hidden) fetchBashTotal(); }, 15000);
+
     function startMashPhase() {
       if (capReached()) { showCapReached(); return; }
       if (turnsLeft <= 0) { setOutOfTurns(); return; }
@@ -3111,19 +3149,21 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
       batterState = 'mash';
       mashPower = 0.05;
       mashCountdown = 2.4;
+      bashSwing = 1; // the press that starts the bash window is a bash too
 
       const pitches = ['FASTBALL', 'SINKER', 'KNUCKLE'];
       pitchType = pitches[Math.floor(Math.random() * pitches.length)];
-      activePitcherBadge.textContent = `DAEMON #42 (${pitchType})`;
+      if (activePitcherBadge) activePitcherBadge.textContent = `DAEMON #42 (${pitchType})`;
 
-      buttonLabel.textContent = 'MASH RAPIDLY!';
+      buttonLabel.textContent = 'BASH RAPIDLY!';
       buttonEmoji.textContent = '🔥';
       primaryActionBtn.className = "tactile-button w-full py-2.5 sm:py-3 px-3 bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-black font-extrabold rounded-lg border-t-2 border-amber-300 text-xs sm:text-sm tracking-wider font-mono-code flex items-center justify-center gap-1.5 shadow-xl";
 
-      postCommentary(`Pitcher Daemon winding up with a ${pitchType}! MASH TO BUILD BAT SPEED!`);
+      postCommentary(`Pitcher Daemon winding up with a ${pitchType}! BASH TO BUILD BAT SPEED!`);
     }
 
     function boostMashPower() {
+      bashSwing += 1;
       mashPower = Math.min(1.0, mashPower + 0.08);
       screenShake = 2.5;
       sound.playMashTick(260 + mashPower * 320);
@@ -3136,6 +3176,8 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     }
 
     function triggerPitchRelease() {
+      reportBashes(bashSwing);
+      bashSwing = 0;
       gameState = STATES.PITCHING;
       batterState = 'idle';
       pitchProgress = 0.0;
