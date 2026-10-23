@@ -108,7 +108,8 @@
     /* Mini app mode (see the script in <head>) */
     .miniapp .derby-brand, .miniapp .derby-marquee { display: none !important; }
     .miniapp main { padding: 0.25rem; justify-content: flex-start; }
-    .miniapp .derby-frame { max-height: calc(100vh - 3.25rem); }
+    .miniapp .derby-frame { max-height: calc(100vh - 3.375rem); }
+    @media (max-width: 639px) { .miniapp .derby-frame { aspect-ratio: auto; height: calc(100vh - 3.375rem); } }
 
     /* How-to-win marquee under the swarm feed: two copies of the line scroll by half the track for a seamless loop */
     .derby-marquee-track { display: flex; width: max-content; animation: derbyMarquee 42s linear infinite; }
