@@ -46,7 +46,7 @@ the pack gets shoutout null.
       ]
     },
     { "skill": "import-site",
-      "objective": "Publish the site from the repository with no build step: the site is index.html, agent.md, agent-bot.mjs, LICENSE, NOTICES.md, icon.png, .well-known/farcaster.json and the themes/ folder, as they are in the repository. dev/, specs/, bash-counter/ and README.md are not part of the site, and no file is edited." },
+      "objective": "Publish the site from the repository with no build step: the site is index.html, agent.md, agent-bot.mjs, LICENSE, NOTICES.md, icon.png, farcaster.json and the themes/ folder, as they are in the repository. dev/, specs/, bash-counter/ and README.md are not part of the site, and no file is edited." },
     { "skill": "site-content-check" }
   ],
   "ipfs": true
