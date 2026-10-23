@@ -1,0 +1,14 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "Swarm Derby",
+    "subtitle": "Bash, swing, win the daily pot",
+    "description": "A one-button batting cage on Robinhood Chain. Practice for free, or play live for the daily Arcade pot. Agents play for the Agents pot.",
+    "homeUrl": "https://swarm-derby.sites.imd.fun/?miniapp=1",
+    "iconUrl": "https://swarm-derby.sites.imd.fun/icon.png",
+    "splashImageUrl": "https://swarm-derby.sites.imd.fun/icon.png",
+    "splashBackgroundColor": "#060809",
+    "primaryCategory": "games",
+    "tags": ["baseball", "arcade", "imd", "swarm"]
+  }
+}

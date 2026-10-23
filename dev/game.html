@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SWARM DERBY // The 1-Button Batting Cage</title>
+  <!-- Mini app mode: inside a mini app panel (a frame, or ?miniapp=1) the page drops its brand label and marquee and
+       fits the game to the panel's height. -->
+  <script>
+    try {
+      if (window.self !== window.top || new URLSearchParams(location.search).has('miniapp')) document.documentElement.classList.add('miniapp');
+    } catch (e) {
+      document.documentElement.classList.add('miniapp');
+    }
+  </script>
   <!-- Favicon: a pixel-art baseball (32 px), and a 192 px copy for home screens -->
   <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/UlEQVR42tWXsQ0CMQxF09NR0tAzARJiMyagYSA2oGEFBqBEtIfuhFGIEts/NgkX6Xd3+S/fSuKE8B7r/WZoqRCPxWo59NBn5b0ApiRqAU7Hw5eaAKSmJbkD0MTPx10lLYgKADVHIESAGuMcSBWAh7kEUQSIY79td5NQ0/i/UjlYgNJkqDmXQhagFD0KoCmFGsAjARMAAsF9JwJIe14LoD0bIABrAtfL2QZgSWA07wZA5ioAaRcgJRgVmxNAs3MgNZ8PQAqBxE81z5UBvgtSCK05KTWHAGqu41zk3OpdG5Iac7eWjDM2t2QShMV8Xm353zxMfvI06/447f08fwGRSTbK3Q+x+AAAAABJRU5ErkJggg==">
   <link rel="apple-touch-icon" sizes="192x192" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAADfklEQVR42u3csU0EMRBAUedkhCTkVICErjMqIKEgOiChBQogRJceDeCTfPJoPZ630i9g5+Yllm9bG3weT08XadVa9GPIAkACQAJAAkDaDsDdw/1F2iUABAAAAgAAAQCAAABAAPSOkwxNO9U9NgVAAAAgAAAQAAAIAAAEgKHd1Pvba2hmDAAAAgAAAQCAAABAAAAgAFZe3NUCAAAAAAAAAAAAAAAAAAAAAAAAANgDwOhCnH9/SlUNDAAAAAAAAAAAAAAAAAAAAAAAAJAdgEUHAwAAAAAAAAAAAAAAAAAAAAAAANgJgIXOBQYAAAAAAAAAAAAAAAAAAAAAAAAAwKKDAQAAAAAAAAAAAAAAAAAAAAAAANQBMOsS2/fzy1CW83qz5rnapToAAAAAAAAAAEAAACAAABAAqwFY7Ye06HPnAwAAAAAAAAAAAAAAAAAAAAAAAOwKYLXLbQCsOYdoGAAAAAAAAAAAAAAAAAAAAAAAAMCuAByD5poPAAAAAAAAAAAAAAAAAAAAAAAAAAAYFd4XAAsBAAAWAgAALAQAAAAAAAAAAJAFwKwPXbkcVvO9oj+kBQAAAAAAAAAAAAAAAAAAAAAAAFQD4Bj02Pf9+vz4NwAAAAAAAAAAAAAAAAAAAAAAAAAAx4UZ36u36AAAAAAAAAAAgEUBAAAAAAAAAAAAACDje40uOgAAAAAAAAAAAAAAAAAAAAAAAJAdQPbPo7sMd71Ziz4KwJfhAAAAAAAAAAAAAAAAAAAAAAAAAMedEXOIXnQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPICiIbh0tttf1k86pJc9KIDAAAAAAAAAAAAAAAAAAAAAAAAWQBEw6i26KNFLzoAAAAAAAAAAAAAAAAAAAAAAABQDUCWy3O7Lnr2y20AAAAAAAAAAAAAAAAAAAAAAABAdgBgWHQAAAAAAAAAAAAAAAAAAAAAAACgMoCjLtVVW/TVLrEBAAAAAAAAAAAAAAAAAAAAAAAAAOSCYdEBAAAAAAAAAAAAAAAAAAAAAAAAADKCyV613xcAAAAAAAAAAAAAAAAAAAAAAAAAIBckMwYAAAEAgAAAQAAAIAAAEAASABIAEgASABIAAqAHoPcYmnaqjT6GJgAkACQAJACkMgB6T+84SVqhFv0YsgCQAJAAkACQsgL4AwLCtK4QBxh3AAAAAElFTkSuQmCC">
@@ -96,6 +105,11 @@
       transform: translateY(5px);
       box-shadow: 0 2px 0 #0f172a, 0 4px 10px rgba(0, 0, 0, 0.8);
     }
+    /* Mini app mode (see the script in <head>) */
+    .miniapp .derby-brand, .miniapp .derby-marquee { display: none !important; }
+    .miniapp main { padding: 0.25rem; justify-content: flex-start; }
+    .miniapp .derby-frame { max-height: calc(100vh - 3.25rem); }
+
     /* How-to-win marquee under the swarm feed: two copies of the line scroll by half the track for a seamless loop */
     .derby-marquee-track { display: flex; width: max-content; animation: derbyMarquee 42s linear infinite; }
     .derby-marquee:hover .derby-marquee-track { animation-play-state: paused; }
@@ -124,7 +138,7 @@
   <!-- IMD Header Telemetry Bar -->
   <header class="w-full bg-[#0a0d10] border-b border-zinc-800 z-30 px-3 sm:px-6 py-2 flex items-center justify-between text-xs font-mono-code sticky top-0 shadow-xl">
     <div class="flex-1 min-w-0 flex items-center gap-3 sm:gap-6">
-      <div class="flex items-center gap-2">
+      <div class="derby-brand flex items-center gap-2">
         <span class="text-emerald-400 font-bold text-base tracking-tighter whitespace-nowrap">◇ IMD</span>
         <span class="text-zinc-600">/</span>
         <span class="bg-zinc-900 text-emerald-400 px-2 py-0.5 rounded border border-zinc-700/80 font-bold tracking-wider text-[11px] whitespace-nowrap">SWARM DERBY</span>
@@ -231,7 +245,7 @@
   <main class="relative flex-1 w-full max-w-6xl mx-auto flex flex-col items-center justify-center p-1 sm:p-3 overflow-hidden">
     
     <!-- Stadium Chassis Frame -->
-    <div class="relative w-full aspect-[3/4] sm:aspect-[4/3] max-h-[78vh] sm:max-h-[660px] bg-black rounded-xl border-2 border-zinc-700/80 shadow-2xl overflow-hidden flex flex-col">
+    <div class="derby-frame relative w-full aspect-[3/4] sm:aspect-[4/3] max-h-[78vh] sm:max-h-[660px] bg-black rounded-xl border-2 border-zinc-700/80 shadow-2xl overflow-hidden flex flex-col">
       
       <!-- Split-Perspective Canvas -->
       <canvas id="gameCanvas" class="w-full h-full block cursor-crosshair"></canvas>
@@ -2149,7 +2163,8 @@ if (typeof module !== 'undefined') module.exports = DerbyOdds;
     // ── wallet ──
     async function connectWallet() {
       if (!window.ethereum) {
-        showBanner('NO WALLET', 'Install a browser wallet to play live', 'red');
+        if (document.documentElement.classList.contains('miniapp')) showBanner('NO WALLET HERE', 'Open Swarm Derby in a new tab to play live', 'red');
+        else showBanner('NO WALLET', 'Install a browser wallet to play live', 'red');
         return;
       }
       try {
